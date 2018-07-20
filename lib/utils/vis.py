@@ -116,9 +116,6 @@ def vis_one_image(
         boxes, segms, keypoints, classes = convert_from_cls_format(
             boxes, segms, keypoints)
 
-    if boxes is None or boxes.shape[0] == 0 or max(boxes[:, 4]) < thresh:
-        return
-
     if segms is not None:
         masks = mask_util.decode(segms)
 
@@ -136,6 +133,12 @@ def vis_one_image(
     fig.add_axes(ax)
     ax.imshow(im)
 
+    if boxes is None or boxes.shape[0] == 0 or max(boxes[:, 4]) < thresh:
+        output_name = os.path.basename(im_name) + '.' + ext
+        fig.savefig(os.path.join(output_dir, '{}'.format(output_name)), dpi=dpi)
+        plt.close('all')
+        return
+
     # Display in largest to smallest order to reduce occlusion
     areas = (boxes[:, 2] - boxes[:, 0]) * (boxes[:, 3] - boxes[:, 1])
     sorted_inds = np.argsort(-areas)
@@ -147,7 +150,6 @@ def vis_one_image(
         if score < thresh:
             continue
 
-        print(dataset.classes[classes[i]], score)
         # show box (off by default, box_alpha=0.0)
         ax.add_patch(
             plt.Rectangle((bbox[0], bbox[1]),
