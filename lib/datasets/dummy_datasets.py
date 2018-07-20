@@ -45,3 +45,13 @@ def get_coco_dataset():
     ]
     ds.classes = {i: name for i, name in enumerate(classes)}
     return ds
+
+
+def get_coco_objectness_dataset():
+    """A dummy COCO objectness dataset that includes only the 'classes' field.
+
+    This dataset has only two categories: background and object."""
+    ds = AttrDict()
+    classes = ['__background__', 'object']
+    ds.classes = {i: name for i, name in enumerate(classes)}
+    return ds
