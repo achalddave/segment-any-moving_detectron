@@ -7,6 +7,7 @@ import pickle
 import resource
 import traceback
 import logging
+import pprint
 from collections import defaultdict
 
 import numpy as np
@@ -53,6 +54,10 @@ def parse_args():
         help='Set config keys. Key value sequence seperate by whitespace.'
              'e.g. [key] [value] [key] [value]',
         default=[], nargs='+')
+    parser.add_argument(
+        '--run_name_prefix',
+        help='Prefix to output directory name.',
+        default='')
 
     parser.add_argument(
         '--disp_interval',
@@ -135,12 +140,35 @@ def save_ckpt(output_dir, args, step, train_size, model, optimizer):
     logger.info('save model: %s', save_name)
 
 
+def _set_logging(logging_filepath=None):
+    """Setup logger to log to file and stdout."""
+    log_format = ('%(asctime)s %(filename)s:%(lineno)4d: ' '%(message)s')
+    stream_date_format = '%H:%M:%S'
+    file_date_format = '%m/%d %H:%M:%S'
+
+    # Clear any previous changes to logging.
+    logging.root.handlers = []
+    logging.root.setLevel(logging.INFO)
+
+    if logging_filepath:
+        file_handler = logging.FileHandler(logging_filepath)
+        file_handler.setFormatter(
+            logging.Formatter(log_format, datefmt=file_date_format))
+        logging.root.addHandler(file_handler)
+        logging.info('Writing log file to %s', logging_filepath)
+
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(
+        logging.Formatter(log_format, datefmt=stream_date_format))
+    logging.root.addHandler(console_handler)
+
+
 def main():
     """Main function"""
 
     args = parse_args()
-    print('Called with args:')
-    print(args)
+    logger.info('Called with args:')
+    logger.info(pprint.pformat(args))
 
     if not torch.cuda.is_available():
         sys.exit("Need a CUDA device to run the code.")
@@ -163,6 +191,20 @@ def main():
     if args.set_cfgs is not None:
         cfg_from_list(args.set_cfgs)
 
+    logger.info('Args: %s', pprint.pformat(args))
+    logger.info('Config: %s', pprint.pformat(cfg))
+
+    ### Training Setups ###
+    args.run_name = args.run_name_prefix + misc_utils.get_run_name() + '_step'
+    args.cfg_filename = os.path.basename(args.cfg_file)
+    output_dir = misc_utils.get_output_dir(args, args.run_name)
+    if not args.no_save:
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        _set_logging(os.path.join(output_dir, 'detectron.log'))
+    else:
+        _set_logging()
+
     ### Adaptively adjust some configs ###
     original_batch_size = cfg.NUM_GPUS * cfg.TRAIN.IMS_PER_BATCH
     original_ims_per_batch = cfg.TRAIN.IMS_PER_BATCH
@@ -174,19 +216,19 @@ def main():
         'batch_size: %d, NUM_GPUS: %d' % (args.batch_size, cfg.NUM_GPUS)
     cfg.TRAIN.IMS_PER_BATCH = args.batch_size // cfg.NUM_GPUS
     effective_batch_size = args.iter_size * args.batch_size
-    print('effective_batch_size = batch_size * iter_size = %d * %d' % (args.batch_size, args.iter_size))
+    logger.info('effective_batch_size = batch_size * iter_size = %d * %d' % (args.batch_size, args.iter_size))
 
-    print('Adaptive config changes:')
-    print('    effective_batch_size: %d --> %d' % (original_batch_size, effective_batch_size))
-    print('    NUM_GPUS:             %d --> %d' % (original_num_gpus, cfg.NUM_GPUS))
-    print('    IMS_PER_BATCH:        %d --> %d' % (original_ims_per_batch, cfg.TRAIN.IMS_PER_BATCH))
+    logger.info('Adaptive config changes:')
+    logger.info('    effective_batch_size: %d --> %d' % (original_batch_size, effective_batch_size))
+    logger.info('    NUM_GPUS:             %d --> %d' % (original_num_gpus, cfg.NUM_GPUS))
+    logger.info('    IMS_PER_BATCH:        %d --> %d' % (original_ims_per_batch, cfg.TRAIN.IMS_PER_BATCH))
 
     ### Adjust learning based on batch size change linearly
     # For iter_size > 1, gradients are `accumulated`, so lr is scaled based
     # on batch_size instead of effective_batch_size
     old_base_lr = cfg.SOLVER.BASE_LR
     cfg.SOLVER.BASE_LR *= args.batch_size / original_batch_size
-    print('Adjust BASE_LR linearly according to batch_size change:\n'
+    logger.info('Adjust BASE_LR linearly according to batch_size change:\n'
           '    BASE_LR: {} --> {}'.format(old_base_lr, cfg.SOLVER.BASE_LR))
 
     ### Adjust solver steps
@@ -195,7 +237,7 @@ def main():
     old_max_iter = cfg.SOLVER.MAX_ITER
     cfg.SOLVER.STEPS = list(map(lambda x: int(x * step_scale + 0.5), cfg.SOLVER.STEPS))
     cfg.SOLVER.MAX_ITER = int(cfg.SOLVER.MAX_ITER * step_scale + 0.5)
-    print('Adjust SOLVER.STEPS and SOLVER.MAX_ITER linearly based on effective_batch_size change:\n'
+    logger.info('Adjust SOLVER.STEPS and SOLVER.MAX_ITER linearly based on effective_batch_size change:\n'
           '    SOLVER.STEPS: {} --> {}\n'
           '    SOLVER.MAX_ITER: {} --> {}'.format(old_solver_steps, cfg.SOLVER.STEPS,
                                                   old_max_iter, cfg.SOLVER.MAX_ITER))
@@ -206,12 +248,12 @@ def main():
     # post_nms_topN = int(cfg[cfg_key].RPN_POST_NMS_TOP_N * cfg.FPN.RPN_COLLECT_SCALE + 0.5)
     if cfg.FPN.FPN_ON and cfg.MODEL.FASTER_RCNN:
         cfg.FPN.RPN_COLLECT_SCALE = cfg.TRAIN.IMS_PER_BATCH / original_ims_per_batch
-        print('Scale FPN rpn_proposals collect size directly propotional to the change of IMS_PER_BATCH:\n'
+        logger.info('Scale FPN rpn_proposals collect size directly propotional to the change of IMS_PER_BATCH:\n'
               '    cfg.FPN.RPN_COLLECT_SCALE: {}'.format(cfg.FPN.RPN_COLLECT_SCALE))
 
     if args.num_workers is not None:
         cfg.DATA_LOADER.NUM_THREADS = args.num_workers
-    print('Number of data loading threads: %d' % cfg.DATA_LOADER.NUM_THREADS)
+    logger.info('Number of data loading threads: %d' % cfg.DATA_LOADER.NUM_THREADS)
 
     ### Overwrite some solver settings from command line arguments
     if args.optimizer is not None:
@@ -316,7 +358,7 @@ def main():
             args.start_step = checkpoint['step'] + 1
             if 'train_size' in checkpoint:  # For backward compatibility
                 if checkpoint['train_size'] != train_size:
-                    print('train_size value: %d different from the one in checkpoint: %d'
+                    logger.info('train_size value: %d different from the one in checkpoint: %d'
                           % (train_size, checkpoint['train_size']))
 
             # reorder the params in optimizer checkpoint's params_groups if needed
@@ -338,15 +380,7 @@ def main():
     maskRCNN = mynn.DataParallel(maskRCNN, cpu_keywords=['im_info', 'roidb'],
                                  minibatch=True)
 
-    ### Training Setups ###
-    args.run_name = misc_utils.get_run_name() + '_step'
-    output_dir = misc_utils.get_output_dir(args, args.run_name)
-    args.cfg_filename = os.path.basename(args.cfg_file)
-
     if not args.no_save:
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-
         blob = {'cfg': yaml.dump(cfg), 'args': args}
         with open(os.path.join(output_dir, 'config_and_args.pkl'), 'wb') as f:
             pickle.dump(blob, f, pickle.HIGHEST_PROTOCOL)
@@ -443,7 +477,7 @@ def main():
         save_ckpt(output_dir, args, step, train_size, maskRCNN, optimizer)
         logger.info('Save ckpt done.')
         stack_trace = traceback.format_exc()
-        print(stack_trace)
+        logger.info(stack_trace)
 
     finally:
         if args.use_tfboard and not args.no_save:
