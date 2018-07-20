@@ -7,7 +7,6 @@ Extra packages required to run the script:
 import argparse
 import os
 import requests
-from argparse_color_formatter import ColorHelpFormatter
 from colorama import init, Fore
 
 import _init_paths  # pylint: disable=unused-import
@@ -16,7 +15,7 @@ from core.config import cfg
 
 def parse_args():
     """Parser command line argumnets"""
-    parser = argparse.ArgumentParser(formatter_class=ColorHelpFormatter)
+    parser = argparse.ArgumentParser()
     parser.add_argument('--output_dir', help='Directory to save downloaded weight files',
                         default=os.path.join(cfg.DATA_DIR, 'pretrained_model'))
     parser.add_argument('-t', '--targets', nargs='+', metavar='file_name',
