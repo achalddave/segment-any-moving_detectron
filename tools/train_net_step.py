@@ -17,7 +17,7 @@ import torch.nn as nn
 import cv2
 cv2.setNumThreads(0)  # pytorch issue 1355: possible deadlock in dataloader
 
-import _init_paths  # pylint: disable=unused-import
+import _init_paths  # noqa: F401
 import nn as mynn
 import utils.net as net_utils
 import utils.misc as misc_utils
