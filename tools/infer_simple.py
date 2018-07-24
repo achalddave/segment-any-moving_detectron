@@ -72,7 +72,7 @@ def parse_args():
         help='directory to save demo results',
         default="infer_outputs")
     parser.add_argument(
-        '--merge_pdfs', type=distutils.util.strtobool, default=False)
+        '--save_images', type=distutils.util.strtobool, default=True)
 
     args = parser.parse_args()
 
@@ -219,7 +219,8 @@ def main():
         )
         assert im is not None
 
-        if os.path.isfile(out_image) and os.path.isfile(out_data):
+        if ((not args.save_images or os.path.isfile(out_image))
+                and os.path.isfile(out_data)):
             logging.info('Already processed {}, skipping'.format(image_name))
             continue
         timers = defaultdict(Timer)
@@ -227,9 +228,9 @@ def main():
         cls_boxes, cls_segms, cls_keyps = im_detect_all(
             maskRCNN, im, timers=timers)
 
-        logging.info('Processing {} -> {}'.format(image_name, out_image))
+        logging.info('Processing {} -> {}'.format(image_name, out_data))
 
-        if not os.path.isfile(out_image):
+        if args.save_images and not os.path.isfile(out_image):
             vis_utils.vis_one_image(
                 im[:, :, ::-1],  # BGR -> RGB for visualization
                 base_name,
@@ -254,14 +255,6 @@ def main():
                     'keypoints': cls_keyps,
                 }
                 pickle.dump(data, f)
-
-    if args.merge_pdfs and num_images > 1:
-        merge_out_path = '{}/results.pdf'.format(output_dir)
-        if os.path.exists(merge_out_path):
-            os.remove(merge_out_path)
-        command = "pdfunite {}/*.pdf {}".format(output_dir,
-                                                merge_out_path)
-        subprocess.call(command, shell=True)
 
 
 if __name__ == '__main__':
