@@ -91,6 +91,9 @@ class JsonDataset(object):
         # else:
         #     cfg.MODEL.NUM_CLASSES = 2 if cfg.MODEL.KEYPOINTS_ON else self.num_classes
 
+    def load_image(self, entry):
+        return cv2.imread(entry['image'])
+
     @property
     def cache_path(self):
         cache_path = os.path.abspath(os.path.join(cfg.DATA_DIR, 'cache'))

@@ -35,7 +35,7 @@ from core.config import cfg
 # from core.rpn_generator import generate_rpn_on_range
 from core.test import im_detect_all
 from datasets import task_evaluation
-from datasets.json_dataset import JsonDataset
+from datasets import load_dataset
 from modeling import model_builder
 import nn as mynn
 from utils.detectron_weight_helper import load_detectron_weight
@@ -145,7 +145,7 @@ def test_net_on_dataset(
         multi_gpu=False,
         gpu_id=0):
     """Run inference on a dataset."""
-    dataset = JsonDataset(dataset_name)
+    dataset = load_dataset(dataset_name)
     test_timer = Timer()
     test_timer.tic()
     if multi_gpu:
@@ -249,7 +249,7 @@ def test_net(
             # in-network RPN; 1-stage models don't require proposals.
             box_proposals = None
 
-        im = cv2.imread(entry['image'])
+        im = entry['dataset'].load_image(entry)
         cls_boxes_i, cls_segms_i, cls_keyps_i = im_detect_all(model, im, box_proposals, timers)
 
         extend_results(i, all_boxes, cls_boxes_i)
@@ -344,7 +344,7 @@ def get_roidb_and_dataset(dataset_name, proposal_file, ind_range):
     """Get the roidb for the dataset specified in the global cfg. Optionally
     restrict it to a range of indices if ind_range is a pair of integers.
     """
-    dataset = JsonDataset(dataset_name)
+    dataset = load_dataset(dataset_name)
     if cfg.TEST.PRECOMPUTED_PROPOSALS:
         assert proposal_file, 'No proposal file given'
         roidb = dataset.get_roidb(

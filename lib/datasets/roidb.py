@@ -29,7 +29,7 @@ import utils.keypoints as keypoint_utils
 import utils.segms as segm_utils
 import utils.blob as blob_utils
 from core.config import cfg
-from .json_dataset import JsonDataset
+from . import load_dataset
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +40,7 @@ def combined_roidb_for_training(dataset_names, proposal_files):
     which involves caching certain types of metadata for each roidb entry.
     """
     def get_roidb(dataset_name, proposal_file):
-        ds = JsonDataset(dataset_name)
+        ds = load_dataset(dataset_name)
         roidb = ds.get_roidb(
             gt=True,
             proposal_file=proposal_file,
