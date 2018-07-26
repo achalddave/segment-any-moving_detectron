@@ -283,7 +283,8 @@ def test_net(
             )
 
         if cfg.VIS:
-            im_name = os.path.splitext(os.path.basename(entry['image']))[0]
+            im_name = os.path.splitext(entry['image'])[0].replace(os.path.sep, '_')
+            # im_name = os.path.splitext(os.path.basename(entry['image']))[0]
             vis_utils.vis_one_image(
                 im[:, :, ::-1],
                 '{:d}_{:s}'.format(i, im_name),
