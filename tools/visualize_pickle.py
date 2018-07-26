@@ -60,11 +60,6 @@ def _set_logging(logging_filepath):
     logging.info('Writing log file to %s', logging_filepath)
 
 
-def is_image(path):
-    return path.is_file and any(path.suffix == extension
-                                for extension in misc_utils.IMG_EXTENSIONS)
-
-
 def main():
     # Use first line of file docstring as description if it exists.
     parser = argparse.ArgumentParser(
@@ -78,8 +73,14 @@ def main():
         '--recursive',
         action='store_true',
         help="Look recursively in --pickle-dir for pickle files.")
+    parser.add_argument(
+        '--images-extension',
+        default='.png')
 
     args = parser.parse_args()
+
+    if args.images_extension[0] != '.':
+        args.images_extension = '.' + args.images_extension
 
     images_root = Path(args.images_dir)
     pickle_root = Path(args.pickle_dir)
@@ -109,7 +110,10 @@ def main():
             pickle_root.rglob('*.pkl'))
 
     relative_paths = [x.relative_to(pickle_root) for x in detectron_outputs]
-    images = [images_root / x.with_suffix('.png') for x in relative_paths]
+    images = [
+        images_root / x.with_suffix(args.images_extension)
+        for x in relative_paths
+    ]
     outputs = [output_root / x.with_suffix('.png') for x in relative_paths]
 
     for image_path, pickle_path, output_path in zip(
