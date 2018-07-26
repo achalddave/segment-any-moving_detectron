@@ -34,6 +34,7 @@ import utils.misc as misc_utils
 import utils.net as net_utils
 import utils.vis as vis_utils
 from utils.detectron_weight_helper import load_detectron_weight
+from utils.flow import load_flow_png
 from utils.timer import Timer
 
 # OpenCL may be enabled by default in OpenCV3; disable it because it's not
@@ -153,8 +154,9 @@ def main():
     assert args.image_dir or args.images
     assert bool(args.image_dir) ^ bool(args.images)
 
-    if args.dataset == 'coco2017objectness':
-        dataset = datasets.get_coco_objectness_dataset()
+    if (args.dataset == "coco2017objectness"
+            or args.dataset.startswith("flyingthings")):
+        dataset = datasets.get_objectness_dataset()
         cfg.MODEL.NUM_CLASSES = len(dataset.classes)
     elif args.dataset.startswith("coco"):
         dataset = datasets.get_coco_dataset()
@@ -167,6 +169,8 @@ def main():
 
     logging.info('load cfg from file: {}'.format(args.cfg_file))
     cfg_from_file(args.cfg_file)
+
+    input_is_flow = args.dataset.startswith("flyingthings")
 
     if args.set_cfgs is not None:
         cfg_from_list(args.set_cfgs)
@@ -212,7 +216,10 @@ def main():
 
     for image_path, out_image, out_data in zip(
             images, output_images, output_pickles):
-        im = cv2.imread(str(image_path))
+        if input_is_flow:
+            im = load_flow_png(str(image_path))
+        else:
+            im = cv2.imread(str(image_path))
         assert im is not None
 
         if ((not args.save_images or os.path.isfile(out_image))

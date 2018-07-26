@@ -163,6 +163,10 @@ def main():
     elif args.dataset == "keypoints_coco2017":
         cfg.TRAIN.DATASETS = ('keypoints_coco_2017_train',)
         cfg.MODEL.NUM_CLASSES = 2
+    elif args.dataset == "flyingthings":
+        cfg.TRAIN.DATASETS = ("flyingthings3d_train",)
+        cfg.PIXEL_MEANS = np.array([[[0, 0, 0]]])
+        cfg.MODEL.NUM_CLASSES = 2
     else:
         raise ValueError("Unexpected args.dataset: {}".format(args.dataset))
 

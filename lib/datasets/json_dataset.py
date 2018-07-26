@@ -26,11 +26,13 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import copy
+import cv2
 from six.moves import cPickle as pickle
 import logging
 import numpy as np
 import os
 import scipy.sparse
+from pathlib import Path
 
 # Must happen before importing COCO API (which imports matplotlib)
 import utils.env as envu
@@ -42,6 +44,7 @@ from pycocotools.coco import COCO
 import utils.boxes as box_utils
 from core.config import cfg
 from utils.timer import Timer
+from utils.flow import load_flow_png
 from .dataset_catalog import ANN_FN
 from .dataset_catalog import DATASETS
 from .dataset_catalog import IM_DIR
@@ -92,7 +95,12 @@ class JsonDataset(object):
         #     cfg.MODEL.NUM_CLASSES = 2 if cfg.MODEL.KEYPOINTS_ON else self.num_classes
 
     def load_image(self, entry):
-        return cv2.imread(entry['image'])
+        if self.name.startswith('flyingthings'):
+            # R channel contains angle, G channel contains magnitude. Note that
+            # this image is loaded in BGR format because of OpenCV.
+            return load_flow_png(entry['image'])
+        else:
+            return cv2.imread(entry['image'])
 
     @property
     def cache_path(self):

@@ -47,8 +47,8 @@ def get_coco_dataset():
     return ds
 
 
-def get_coco_objectness_dataset():
-    """A dummy COCO objectness dataset that includes only the 'classes' field.
+def get_objectness_dataset():
+    """A dummy objectness dataset that includes only the 'classes' field.
 
     This dataset has only two categories: background and object."""
     ds = AttrDict()
