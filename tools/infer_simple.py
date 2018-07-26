@@ -10,6 +10,7 @@ import pickle
 import sys
 import subprocess
 from collections import defaultdict
+from pprint import pformat
 from six.moves import xrange
 
 # Use a non-interactive backend
@@ -137,7 +138,7 @@ def main():
     file_logger.info('===')
 
     logging.info('Called with args:')
-    logging.info(args)
+    logging.info(pformat(vars(args)))
 
     assert args.image_dir or args.images
     assert bool(args.image_dir) ^ bool(args.images)
