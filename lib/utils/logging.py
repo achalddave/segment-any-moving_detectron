@@ -27,6 +27,7 @@ import logging
 import numpy as np
 import smtplib
 import sys
+from pathlib import Path
 
 from core.config import cfg
 
@@ -99,11 +100,26 @@ def send_email(subject, body, to):
     s.sendmail('detectron', to, mime.as_string())
 
 
-def setup_logging(name):
-    FORMAT = '%(levelname)s %(filename)s:%(lineno)4d: %(message)s'
-    # Manually clear root loggers to prevent any module that may have called
-    # logging.basicConfig() from blocking our logging setup
+def setup_logging(logging_filepath):
+    """Setup logger to log to file and stdout."""
+    log_format = ('%(asctime)s %(filename)s:%(lineno)4d: ' '%(message)s')
+    stream_date_format = '%H:%M:%S'
+    file_date_format = '%m/%d %H:%M:%S'
+
+    # Clear any previous changes to logging.
     logging.root.handlers = []
-    logging.basicConfig(level=logging.INFO, format=FORMAT, stream=sys.stdout)
-    logger = logging.getLogger(name)
-    return logger
+    logging.root.setLevel(logging.INFO)
+
+    if logging_filepath is not None:
+        assert not Path(logging_filepath).exists(), (
+            'Logging path (%s) already exists' % logging_filepath)
+        file_handler = logging.FileHandler(logging_filepath)
+        file_handler.setFormatter(
+            logging.Formatter(log_format, datefmt=file_date_format))
+        logging.root.addHandler(file_handler)
+        logging.info('Writing log file to %s', logging_filepath)
+
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(
+        logging.Formatter(log_format, datefmt=stream_date_format))
+    logging.root.addHandler(console_handler)

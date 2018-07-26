@@ -8,6 +8,7 @@ import resource
 import traceback
 import logging
 import pprint
+import subprocess
 from collections import defaultdict
 
 import numpy as np
@@ -32,7 +33,6 @@ from utils.timer import Timer
 from utils.training_stats import TrainingStats
 
 # Set up logging and load config options
-logger = setup_logging(__name__)
 logging.getLogger('roi_data.loader').setLevel(logging.INFO)
 
 # RuntimeError: received 0 items of ancdata. Issue: pytorch/pytorch#973
@@ -137,38 +137,14 @@ def save_ckpt(output_dir, args, step, train_size, model, optimizer):
         'batch_size': args.batch_size,
         'model': model.state_dict(),
         'optimizer': optimizer.state_dict()}, save_name)
-    logger.info('save model: %s', save_name)
-
-
-def _set_logging(logging_filepath=None):
-    """Setup logger to log to file and stdout."""
-    log_format = ('%(asctime)s %(filename)s:%(lineno)4d: ' '%(message)s')
-    stream_date_format = '%H:%M:%S'
-    file_date_format = '%m/%d %H:%M:%S'
-
-    # Clear any previous changes to logging.
-    logging.root.handlers = []
-    logging.root.setLevel(logging.INFO)
-
-    if logging_filepath:
-        file_handler = logging.FileHandler(logging_filepath)
-        file_handler.setFormatter(
-            logging.Formatter(log_format, datefmt=file_date_format))
-        logging.root.addHandler(file_handler)
-        logging.info('Writing log file to %s', logging_filepath)
-
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(
-        logging.Formatter(log_format, datefmt=stream_date_format))
-    logging.root.addHandler(console_handler)
+    logging.getLogger(__name__).info('save model: %s', save_name)
 
 
 def main():
     """Main function"""
 
     args = parse_args()
-    logger.info('Called with args:')
-    logger.info(pprint.pformat(args))
+    orig_args = vars(args).copy()
 
     if not torch.cuda.is_available():
         sys.exit("Need a CUDA device to run the code.")
@@ -194,9 +170,6 @@ def main():
     if args.set_cfgs is not None:
         cfg_from_list(args.set_cfgs)
 
-    logger.info('Args: %s', pprint.pformat(args))
-    logger.info('Config: %s', pprint.pformat(cfg))
-
     ### Training Setups ###
     args.run_name = args.run_name_prefix + misc_utils.get_run_name() + '_step'
     args.cfg_filename = os.path.basename(args.cfg_file)
@@ -204,9 +177,13 @@ def main():
     if not args.no_save:
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        _set_logging(os.path.join(output_dir, 'detectron.log'))
+        setup_logging(os.path.join(output_dir, 'detectron.log'))
     else:
-        _set_logging()
+        setup_logging()
+    logger = logging.getLogger(__name__)
+    logger.info('Args: %s', pprint.pformat(orig_args))
+    logger.info('Config: %s', pprint.pformat(cfg))
+
 
     ### Adaptively adjust some configs ###
     original_batch_size = cfg.NUM_GPUS * cfg.TRAIN.IMS_PER_BATCH
@@ -354,7 +331,7 @@ def main():
     ### Load checkpoint
     if args.load_ckpt:
         load_name = args.load_ckpt
-        logging.info("loading checkpoint %s", load_name)
+        logger.info("loading checkpoint %s", load_name)
         checkpoint = torch.load(load_name, map_location=lambda storage, loc: storage)
         net_utils.load_ckpt(maskRCNN, checkpoint['model'])
         if args.resume:
@@ -375,7 +352,7 @@ def main():
         torch.cuda.empty_cache()
 
     if args.load_detectron:  #TODO resume for detectron weights (load sgd momentum values)
-        logging.info("loading Detectron weights %s", args.load_detectron)
+        logger.info("loading Detectron weights %s", args.load_detectron)
         load_detectron_weight(maskRCNN, args.load_detectron)
 
     lr = optimizer.param_groups[0]['lr']  # lr of non-bias parameters, for commmand line outputs.

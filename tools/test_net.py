@@ -2,6 +2,7 @@
 
 import argparse
 import cv2
+import logging
 import os
 import pprint
 import sys
@@ -63,22 +64,30 @@ if __name__ == '__main__':
     if not torch.cuda.is_available():
         sys.exit("Need a CUDA device to run the code.")
 
-    logger = utils.logging.setup_logging(__name__)
     args = parse_args()
-    logger.info('Called with args:')
-    logger.info(args)
 
     assert (torch.cuda.device_count() == 1) ^ bool(args.multi_gpu_testing)
 
     assert bool(args.load_ckpt) ^ bool(args.load_detectron), \
         'Exactly one of --load_ckpt and --load_detectron should be specified.'
+    output_dir_automatically_set = False
     if args.output_dir is None:
         ckpt_path = args.load_ckpt if args.load_ckpt else args.load_detectron
         args.output_dir = os.path.join(
             os.path.dirname(os.path.dirname(ckpt_path)), 'test')
-        logger.info('Automatically set output directory to %s', args.output_dir)
+        output_dir_automatically_set = True
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
+
+    utils.logging.setup_logging(
+        os.path.join(args.output_dir, 'evaluation.log'))
+    logger = logging.getLogger(__name__)
+    if output_dir_automatically_set:
+        logger.info('Automatically set output directory to %s',
+                    args.output_dir)
+
+    logger.info('Called with args:')
+    logger.info(args)
 
     cfg.VIS = args.vis
 
