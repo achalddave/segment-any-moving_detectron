@@ -178,6 +178,11 @@ def main():
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
         setup_logging(os.path.join(output_dir, 'detectron.log'))
+        subprocess.call([
+            './git-state/save_git_state.sh',
+            os.path.join(output_dir, 'git-state')
+        ])
+
     else:
         setup_logging()
     logger = logging.getLogger(__name__)
