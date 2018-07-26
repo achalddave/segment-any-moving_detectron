@@ -1,3 +1,4 @@
+.*neomake*.py
 data/*
 *.pyc
 *~
