@@ -10,6 +10,7 @@ import pickle
 import sys
 import subprocess
 from collections import defaultdict
+from pathlib import Path
 from pprint import pformat
 from six.moves import xrange
 
@@ -73,6 +74,10 @@ def parse_args():
         help='directory to save demo results',
         default="infer_outputs")
     parser.add_argument(
+        '--recursive',
+        action='store_true',
+        help="Look recursively in --image_dir for images.")
+    parser.add_argument(
         '--save_images', type=distutils.util.strtobool, default=True)
 
     args = parser.parse_args()
@@ -118,6 +123,11 @@ def _set_logging(logging_filepath):
     logging.info('Writing log file to %s', logging_filepath)
 
 
+def is_image(path):
+    return path.is_file and any(path.suffix == extension
+                                for extension in misc_utils.IMG_EXTENSIONS)
+
+
 def main():
     """main function"""
 
@@ -125,9 +135,9 @@ def main():
         sys.exit("Need a CUDA device to run the code.")
 
     args = parse_args()
-    logging_path = os.path.join(args.output_dir, 'detectron-pytorch.log')
-    if not os.path.exists(args.output_dir):
-        os.makedirs(args.output_dir)
+    output_dir = Path(args.output_dir)
+    logging_path = str(output_dir / 'detectron-pytorch.log')
+    output_dir.mkdir(parents=True, exist_ok=True)
     _set_logging(logging_path)
 
     file_logger = logging.getLogger(logging_path)
@@ -186,56 +196,43 @@ def main():
 
     maskRCNN.eval()
 
-    # XXX HACK XXX
-    # Look at images one nested level within folder
-    NESTED_IMAGES = True
-
     if args.image_dir:
-        if NESTED_IMAGES:
-            imglist = []
-            for subdir in os.listdir(args.image_dir):
-                subdir_path = os.path.join(args.image_dir, subdir)
-                if os.path.isdir(subdir_path):
-                    imglist += misc_utils.get_imagelist_from_dir(subdir_path)
+        image_dir = Path(args.image_dir)
+        if args.recursive:
+            images = [x for x in image_dir.rglob('*') if is_image(x)]
         else:
-            imglist = misc_utils.get_imagelist_from_dir(args.image_dir)
+            images = [x for x in image_dir.iterdir() if is_image(x)]
+        if not images:
+            raise ValueError('Found no images in %s' % args.image_dir)
+        output_images = [output_dir / x.relative_to(image_dir) for x in images]
     else:
-        imglist = args.images
-    num_images = len(imglist)
+        images = [Path(x) for x in args.images]
+        output_images = [output_dir / x.stem for x in images]
+    output_pickles = [x.with_suffix('.pickle') for x in output_images]
 
-    for image_name in imglist:
-        if NESTED_IMAGES:
-            parent_name = os.path.split(os.path.split(image_name)[0])[1]
-            output_dir = os.path.join(args.output_dir, parent_name)
-            os.makedirs(output_dir, exist_ok=True)
-        else:
-            output_dir = args.output_dir
-        im = cv2.imread(image_name)
-        base_name = os.path.splitext(os.path.basename(image_name))[0]
-        out_image = os.path.join(
-            output_dir, '{}'.format(base_name + '.png')
-        )
-        out_data = os.path.join(
-            output_dir, '{}'.format(base_name + '.pickle')
-        )
+    for image_path, out_image, out_data in zip(
+            images, output_images, output_pickles):
+        im = cv2.imread(str(image_path))
         assert im is not None
 
         if ((not args.save_images or os.path.isfile(out_image))
                 and os.path.isfile(out_data)):
-            logging.info('Already processed {}, skipping'.format(image_name))
+            logging.info('Already processed {}, skipping'.format(image_path))
             continue
         timers = defaultdict(Timer)
 
         cls_boxes, cls_segms, cls_keyps = im_detect_all(
             maskRCNN, im, timers=timers)
 
-        logging.info('Processing {} -> {}'.format(image_name, out_data))
+        logging.info('Processing {} -> {}'.format(
+            image_path, out_image if args.save_images else out_data))
 
         if args.save_images and not os.path.isfile(out_image):
+            out_image.parent.mkdir(exist_ok=True, parents=True)
             vis_utils.vis_one_image(
                 im[:, :, ::-1],  # BGR -> RGB for visualization
-                base_name,
-                output_dir,
+                out_image.stem,
+                out_image.parent,
                 cls_boxes,
                 cls_segms,
                 cls_keyps,
@@ -249,6 +246,7 @@ def main():
             )
 
         if not os.path.isfile(out_data):
+            out_data.parent.mkdir(exist_ok=True, parents=True)
             with open(out_data, 'wb') as f:
                 data = {
                     'boxes': cls_boxes,
