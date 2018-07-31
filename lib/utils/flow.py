@@ -18,7 +18,7 @@ def load_flow_png(png_path):
         magnitude_min = float(magnitude_min)
         magnitude_max = float(magnitude_max)
     image[:, :, 1] = (
-        image[:, :, 1] * (magnitude_max - magnitude_min) + magnitude_min)
+        image[:, :, 1] * (magnitude_max - magnitude_min) + magnitude_min) / 255
     height, width = image.shape[:2]
     # Largest possible flow vector
     hypotenuse = (height ** 2 + width ** 2) ** 0.5
