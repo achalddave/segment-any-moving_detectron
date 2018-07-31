@@ -249,7 +249,9 @@ def test_net(
             # in-network RPN; 1-stage models don't require proposals.
             box_proposals = None
 
+        timers['im_load'].tic()
         im = entry['dataset'].load_image(entry)
+        timers['im_load'].toc()
         cls_boxes_i, cls_segms_i, cls_keyps_i = im_detect_all(model, im, box_proposals, timers)
 
         extend_results(i, all_boxes, cls_boxes_i)
