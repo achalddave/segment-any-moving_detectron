@@ -24,4 +24,7 @@ def load_flow_png(png_path):
     hypotenuse = (height ** 2 + width ** 2) ** 0.5
     # 6 is a magic constant Pavel used for normalization
     image[:, :, 1] /= (hypotenuse / 6)
+    # A few frames in FlyingThings3D have extremely large values, which leads
+    # to NaNs in the output. We clip them arbitrarily.
+    image[:, :, 1] = image[:, :, 1].clip(max=300)
     return image
