@@ -163,6 +163,18 @@ DATASETS = {
         ANN_FN:
             _DATA_DIR + '/flyingthings3d/annotations/test.json'
     },
+    'flyingthings3d_estimatedflow_train': {
+        IM_DIR:
+            _DATA_DIR + '/flyingthings3d/estimated_flow_images/',
+        ANN_FN:
+            _DATA_DIR + '/flyingthings3d/annotations/train.json'
+    },
+    'flyingthings3d_estimatedflow_test': {
+        IM_DIR:
+            _DATA_DIR + '/flyingthings3d/estimated_flow_images/',
+        ANN_FN:
+            _DATA_DIR + '/flyingthings3d/annotations/test.json'
+    },
     'keypoints_coco_2014_train': {
         IM_DIR:
             _DATA_DIR + '/coco/images/train2014',
