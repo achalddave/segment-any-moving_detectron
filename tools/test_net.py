@@ -10,6 +10,7 @@ import sys
 import time
 
 import torch
+import numpy as np
 
 import _init_paths  # pylint: disable=unused-import
 from core.config import cfg, merge_cfg_from_file, merge_cfg_from_list, assert_and_infer_cfg
@@ -117,6 +118,7 @@ if __name__ == '__main__':
         assert cfg.TEST.DATASETS, 'cfg.TEST.DATASETS shouldn\'t be empty'
 
     if 'flyingthings' in args.dataset:
+        cfg.PIXEL_MEANS = np.array([[[0, 0, 0]]])
         cfg.TEST.FORCE_JSON_DATASET_EVAL = True
     assert_and_infer_cfg()
 
