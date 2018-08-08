@@ -9,6 +9,7 @@ import traceback
 import logging
 import pprint
 import subprocess
+import uuid
 from collections import defaultdict
 
 import numpy as np
@@ -143,6 +144,10 @@ def save_ckpt(output_dir, args, step, train_size, model, optimizer):
 def main():
     """Main function"""
 
+    # Generate a unique experiment ID for this run.
+    # Note: uuid generation relies on os.urandom, so it is not affected by,
+    # e.g., random.seed.
+    experiment_id = uuid.uuid4()
     args = parse_args()
     orig_args = vars(args).copy()
 
@@ -186,13 +191,14 @@ def main():
             './git-state/save_git_state.sh',
             os.path.join(output_dir, 'git-state')
         ])
-
+        with open(os.path.join(output_dir, 'experiment_id.txt'), 'w') as f:
+            f.write('%s\n' % experiment_id)
     else:
         setup_logging()
     logger = logging.getLogger(__name__)
     logger.info('Args: %s', pprint.pformat(orig_args))
     logger.info('Config: %s', pprint.pformat(cfg))
-
+    logger.info('Experiment id: %s', experiment_id)
 
     ### Adaptively adjust some configs ###
     original_batch_size = cfg.NUM_GPUS * cfg.TRAIN.IMS_PER_BATCH
