@@ -22,6 +22,11 @@ def main():
     parser.add_argument(
         '--output-dir',
         help='Default: parent_dir({{detections}})/{{dataset}}-eval-out"')
+    parser.add_argument(
+        '--collapse-categories',
+        action='store_true',
+        help=('Collapse all predicted categories to one category. Useful for '
+              'evaluating object-specific detectors on objectness datasets.'))
 
     args = parser.parse_args()
 
@@ -61,6 +66,34 @@ def main():
     dataset = load_dataset(dataset)
     with open(args.detections, 'rb') as f:
         data = pickle.load(f)
+    if args.collapse_categories:
+        def flatten(lst):
+            return [x for y in lst for x in y]
+
+        if len(data['all_boxes']) > 2:
+            import numpy as np
+            # data['all_boxes'][0] contains boxes for background, and then
+            # data['all_boxes'][c][i] contains boxes for category c, image i.
+            # We collapse across the categories. This is similar for
+            # segmentations and keypoints.
+            num_images = len(data['all_boxes'][1])
+            all_boxes = [data['all_boxes'][0], []]
+            for i in range(num_images):
+                all_boxes[1].append(
+                    np.vstack([x[i] for x in data['all_boxes'][1:]]))
+            data['all_boxes'] = all_boxes
+
+            all_segms = [data['all_segms'][0], []]
+            for i in range(num_images):
+                all_segms[1].append(
+                    flatten([x[i] for x in data['all_segms'][1:]]))
+            data['all_segms'] = all_segms
+
+            all_keyps = [data['all_keyps'][0], []]
+            for i in range(num_images):
+                all_keyps[1].append(
+                    flatten([x[i] for x in data['all_keyps'][1:]]))
+            data['all_keysp'] = all_keyps
     results = task_evaluation.evaluate_all(dataset, data['all_boxes'],
                                            data['all_segms'],
                                            data['all_keyps'], args.output_dir)
