@@ -40,6 +40,7 @@ logging.getLogger('roi_data.loader').setLevel(logging.INFO)
 rlimit = resource.getrlimit(resource.RLIMIT_NOFILE)
 resource.setrlimit(resource.RLIMIT_NOFILE, (4096, rlimit[1]))
 
+
 def parse_args():
     """Parse input arguments"""
     parser = argparse.ArgumentParser(description='Train a X-RCNN network')
@@ -170,6 +171,18 @@ def main():
         cfg.MODEL.NUM_CLASSES = 2
     elif args.dataset == "flyingthings":
         cfg.TRAIN.DATASETS = ("flyingthings3d_train",)
+        cfg.PIXEL_MEANS = np.array([[[0, 0, 0]]])
+        cfg.MODEL.NUM_CLASSES = 2
+    elif args.dataset == "flyingthings_estimated":
+        cfg.TRAIN.DATASETS = ("flyingthings3d_estimatedflow_train",)
+        cfg.PIXEL_MEANS = np.array([[[0, 0, 0]]])
+        cfg.MODEL.NUM_CLASSES = 2
+    elif args.dataset == "fbms_flow":
+        cfg.TRAIN.DATASETS = ("fbms_flow_train",)
+        cfg.PIXEL_MEANS = np.array([[[0, 0, 0]]])
+        cfg.MODEL.NUM_CLASSES = 2
+    elif args.dataset == "davis_flow_moving":
+        cfg.TRAIN.DATASETS = ("davis_flow_moving_train",)
         cfg.PIXEL_MEANS = np.array([[[0, 0, 0]]])
         cfg.MODEL.NUM_CLASSES = 2
     else:

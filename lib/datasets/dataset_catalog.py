@@ -175,6 +175,22 @@ DATASETS = {
         ANN_FN:
             _DATA_DIR + '/flyingthings3d/annotations/test.json'
     },
+    'fbms_flow_train': {
+        IM_DIR: _DATA_DIR + '/fbms/liteflownet/',
+        ANN_FN: _DATA_DIR + '/fbms/annotations/train-without-last-frame.json'
+    },
+    'fbms_flow_test': {
+        IM_DIR: _DATA_DIR + '/fbms/liteflownet/',
+        ANN_FN: _DATA_DIR + '/fbms/annotations/test-without-last-frame.json'
+    },
+    'davis_flow_moving_train': {
+        IM_DIR: _DATA_DIR + '/davis/liteflownet/',
+        ANN_FN: _DATA_DIR + '/davis/annotations/moving-train-no-last-frame.json'
+    },
+    'davis_flow_moving_test': {
+        IM_DIR: _DATA_DIR + '/davis/liteflownet/',
+        ANN_FN: _DATA_DIR + '/davis/annotations/moving-test-no-last-frame.json'
+    },
     'keypoints_coco_2014_train': {
         IM_DIR:
             _DATA_DIR + '/coco/images/train2014',

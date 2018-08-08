@@ -93,7 +93,9 @@ def main():
     logging.info('Args: %s', pformat(vars(args)))
 
     if (args.dataset == "coco2017objectness"
-            or args.dataset.startswith("flyingthings")):
+            or args.dataset.startswith("flyingthings")
+            or args.dataset.startswith("fbms")
+            or args.dataset.startswith("davis")):
         dataset = datasets.get_objectness_dataset()
     elif args.dataset.startswith("coco"):
         dataset = datasets.get_coco_dataset()

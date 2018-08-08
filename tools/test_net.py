@@ -7,7 +7,6 @@ import os
 import pprint
 import subprocess
 import sys
-import time
 
 import torch
 import numpy as np
@@ -88,6 +87,7 @@ if __name__ == '__main__':
         './git-state/save_git_state.sh',
         os.path.join(args.output_dir, 'git-state')
     ])
+
     logger = logging.getLogger(__name__)
     if output_dir_automatically_set:
         logger.info('Automatically set output directory to %s',
@@ -114,23 +114,39 @@ if __name__ == '__main__':
     if args.set_cfgs is not None:
         merge_cfg_from_list(args.set_cfgs)
 
+    print('Pixel means: %s' % cfg.PIXEL_MEANS)
     if args.dataset == "coco2017":
         cfg.TEST.DATASETS = ('coco_2017_val',)
         cfg.MODEL.NUM_CLASSES = 81
     elif args.dataset == "keypoints_coco2017":
         cfg.TEST.DATASETS = ('keypoints_coco_2017_val',)
+    elif args.dataset == 'coco_2017_objectness':
+        cfg.TEST.DATASETS = ('coco_2017_val_objectness',)
         cfg.MODEL.NUM_CLASSES = 2
     elif args.dataset == 'flyingthings':
         cfg.TEST.DATASETS = ('flyingthings3d_test',)
-        cfg.MODEL.NUM_CLASSES = 2
     elif args.dataset == 'flyingthings_train':
         cfg.TEST.DATASETS = ('flyingthings3d_train',)
-        cfg.MODEL.NUM_CLASSES = 2
+    elif args.dataset == 'flyingthings_estimatedflow':
+        cfg.TEST.DATASETS = ('flyingthings3d_estimatedflow_test',)
+    elif args.dataset == 'flyingthings_estimatedflow_train':
+        cfg.TEST.DATASETS = ('flyingthings3d_estimatedflow_train',)
+    elif args.dataset == "fbms_flow":
+        cfg.TEST.DATASETS = ("fbms_flow_test",)
+    elif args.dataset == "fbms_flow_train":
+        cfg.TEST.DATASETS = ("fbms_flow_train",)
+    elif args.dataset == "davis_flow_moving":
+        cfg.TEST.DATASETS = ("davis_flow_moving_test",)
+    elif args.dataset == "davis_flow_moving_train":
+        cfg.TEST.DATASETS = ("davis_flow_moving_train",)
+    elif args.dataset is not None:
+        raise ValueError('Unknown --dataset: %s' % args.dataset)
     else:  # For subprocess call
         assert cfg.TEST.DATASETS, 'cfg.TEST.DATASETS shouldn\'t be empty'
 
-    if 'flyingthings' in args.dataset:
+    if any(x in args.dataset for x in ('flyingthings', 'fbms', 'davis')):
         cfg.PIXEL_MEANS = np.array([[[0, 0, 0]]])
+        cfg.MODEL.NUM_CLASSES = 2
         cfg.TEST.FORCE_JSON_DATASET_EVAL = True
     assert_and_infer_cfg()
 
