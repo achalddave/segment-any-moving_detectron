@@ -164,32 +164,32 @@ DATASETS = {
         ANN_FN:
             _DATA_DIR + '/coco/annotations/stuff_val.json'
     },
-    'flyingthings3d_train': {
+    'flyingthings3d_gtflow_train': {
         IM_DIR:
-            _DATA_DIR + '/flyingthings3d/images/train',
+            _DATA_DIR + '/flyingthings3d/gt_flow_images/',
         ANN_FN:
-            _DATA_DIR + '/flyingthings3d/annotations/train.json',
+            _DATA_DIR + '/flyingthings3d/annotations/train-without-last-frame.json',
         NUM_CLASSES: 2
     },
-    'flyingthings3d_test': {
+    'flyingthings3d_gtflow_test': {
         IM_DIR:
-            _DATA_DIR + '/flyingthings3d/images/test',
+            _DATA_DIR + '/flyingthings3d/gt_flow_images/',
         ANN_FN:
-            _DATA_DIR + '/flyingthings3d/annotations/test.json',
+            _DATA_DIR + '/flyingthings3d/annotations/test-without-last-frame.json',
         NUM_CLASSES: 2
     },
     'flyingthings3d_estimatedflow_train': {
         IM_DIR:
             _DATA_DIR + '/flyingthings3d/estimated_flow_images/',
         ANN_FN:
-            _DATA_DIR + '/flyingthings3d/annotations/train.json',
+            _DATA_DIR + '/flyingthings3d/annotations/train-without-last-frame.json',
         NUM_CLASSES: 2
     },
     'flyingthings3d_estimatedflow_test': {
         IM_DIR:
             _DATA_DIR + '/flyingthings3d/estimated_flow_images/',
         ANN_FN:
-            _DATA_DIR + '/flyingthings3d/annotations/test.json',
+            _DATA_DIR + '/flyingthings3d/annotations/test-without-last-frame.json',
         NUM_CLASSES: 2
     },
     'fbms_flow_train': {
