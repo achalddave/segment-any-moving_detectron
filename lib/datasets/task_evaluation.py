@@ -245,7 +245,6 @@ def check_expected_results(results, atol=0.005, rtol=0.1):
 def _use_json_dataset_evaluator(dataset):
     """Check if the dataset uses the general json dataset evaluator."""
     return (dataset.name.find('coco_') > -1 or
-            dataset.name.find('flyingthings3d_') > -1 or
             cfg.TEST.FORCE_JSON_DATASET_EVAL)
 
 

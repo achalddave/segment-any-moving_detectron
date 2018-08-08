@@ -115,6 +115,9 @@ if __name__ == '__main__':
         cfg.MODEL.NUM_CLASSES = 2
     else:  # For subprocess call
         assert cfg.TEST.DATASETS, 'cfg.TEST.DATASETS shouldn\'t be empty'
+
+    if 'flyingthings' in args.dataset:
+        cfg.TEST.FORCE_JSON_DATASET_EVAL = True
     assert_and_infer_cfg()
 
     logger.info('Testing with config:')
