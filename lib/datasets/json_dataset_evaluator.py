@@ -25,6 +25,8 @@ import logging
 import numpy as np
 import os
 import uuid
+from contextlib import redirect_stdout
+from io import StringIO
 
 from pycocotools.cocoeval import COCOeval
 
@@ -238,7 +240,10 @@ def _log_detection_eval_metrics(json_dataset, coco_eval):
         ap = np.mean(precision[precision > -1])
         logger.info('{:.1f}'.format(100 * ap))
     logger.info('~~~~ Summary metrics ~~~~')
-    coco_eval.summarize()
+    summary_f = StringIO()
+    with redirect_stdout(summary_f):
+        coco_eval.summarize()
+    logging.info('\n%s' % summary_f.getvalue())
 
 
 def evaluate_box_proposals(
@@ -438,5 +443,8 @@ def _do_keypoint_eval(json_dataset, res_file, output_dir):
     eval_file = os.path.join(output_dir, 'keypoint_results.pkl')
     save_object(coco_eval, eval_file)
     logger.info('Wrote json eval results to: {}'.format(eval_file))
-    coco_eval.summarize()
+    summary_f = StringIO()
+    with redirect_stdout(summary_f):
+        coco_eval.summarize()
+    logging.info('\n%s' % summary_f.getvalue())
     return coco_eval
