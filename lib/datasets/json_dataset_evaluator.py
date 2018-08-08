@@ -52,8 +52,12 @@ def evaluate_masks(
     _write_coco_segms_results_file(
         json_dataset, all_boxes, all_segms, res_file)
     # Only do evaluation on non-test sets (annotations are undisclosed on test)
-    if 'test' in json_dataset.name and 'flyingthings' not in json_dataset.name:
+    if 'test' in json_dataset.name and 'coco' in json_dataset.name:
         coco_eval = None
+        logging.warn('==============')
+        logging.warn('NOT EVALUATING')
+        logging.warn('==============')
+        logging.warn('Dataset seems to be COCO test set, not evaluating.')
     else:
         coco_eval = _do_segmentation_eval(json_dataset, res_file, output_dir)
     # Optionally cleanup results json file
@@ -134,8 +138,12 @@ def evaluate_boxes(
     res_file += '.json'
     _write_coco_bbox_results_file(json_dataset, all_boxes, res_file)
     # Only do evaluation on non-test sets (annotations are undisclosed on test)
-    if 'test' in json_dataset.name and 'flyingthings' not in json_dataset.name:
+    if 'test' in json_dataset.name and 'coco' in json_dataset.name:
         coco_eval = None
+        logging.warn('==============')
+        logging.warn('NOT EVALUATING')
+        logging.warn('==============')
+        logging.warn('Dataset seems to be COCO test set, not evaluating.')
     else:
         coco_eval = _do_detection_eval(json_dataset, res_file, output_dir)
     # Optionally cleanup results json file
@@ -334,10 +342,14 @@ def evaluate_keypoints(
     _write_coco_keypoint_results_file(
         json_dataset, all_boxes, all_keypoints, res_file)
     # Only do evaluation on non-test sets (annotations are undisclosed on test)
-    if json_dataset.name.find('test') == -1:
-        coco_eval = _do_keypoint_eval(json_dataset, res_file, output_dir)
-    else:
+    if 'test' in json_dataset.name and 'coco' in json_dataset.name:
         coco_eval = None
+        logging.warn('==============')
+        logging.warn('NOT EVALUATING')
+        logging.warn('==============')
+        logging.warn('Dataset seems to be COCO test set, not evaluating.')
+    else:
+        coco_eval = _do_keypoint_eval(json_dataset, res_file, output_dir)
     # Optionally cleanup results json file
     if cleanup:
         os.remove(res_file)
