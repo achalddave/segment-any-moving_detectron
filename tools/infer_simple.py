@@ -120,12 +120,11 @@ def main():
     assert args.image_dir or args.images
     assert bool(args.image_dir) ^ bool(args.images)
 
-    if args.dataset == "coco2017objectness":
+    if args.dataset in ('coco_2017_train_objectness',
+                        'coco_2017_val_objectness'):
         dataset = datasets.get_objectness_dataset()
         cfg.MODEL.NUM_CLASSES = len(dataset.classes)
-    elif (args.dataset.startswith('flyingthings')
-          or args.dataset.startswith('fbms')
-          or args.dataset.startswith('davis')):
+    elif any(x in args.dataset for x in ('flyingthings', 'fbms', 'davis')):
         dataset = datasets.get_objectness_dataset()
         cfg.MODEL.NUM_CLASSES = len(dataset.classes)
         cfg.PIXEL_MEANS = np.array([[[0, 0, 0]]])

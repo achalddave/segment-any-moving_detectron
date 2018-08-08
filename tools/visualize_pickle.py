@@ -92,10 +92,10 @@ def main():
     _set_logging(str(output_root / 'visualization.log'))
     logging.info('Args: %s', pformat(vars(args)))
 
-    if (args.dataset == "coco2017objectness"
-            or args.dataset.startswith("flyingthings")
-            or args.dataset.startswith("fbms")
-            or args.dataset.startswith("davis")):
+    if (args.dataset in ('coco_2017_train_objectness',
+                         'coco_2017_val_objectness')
+            or any(x in args.dataset
+                   for x in ['flyingthings', 'fbms', 'davis'])):
         dataset = datasets.get_objectness_dataset()
     elif args.dataset.startswith("coco"):
         dataset = datasets.get_coco_dataset()

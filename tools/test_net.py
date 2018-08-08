@@ -15,6 +15,7 @@ import _init_paths  # pylint: disable=unused-import
 from core.config import (cfg, merge_cfg_from_file, merge_cfg_from_cfg,
                          merge_cfg_from_list, assert_and_infer_cfg)
 from core.test_engine import run_inference
+from datasets import dataset_catalog
 import utils.logging
 
 # OpenCL may be enabled by default in OpenCV3; disable it because it's not
@@ -115,39 +116,26 @@ if __name__ == '__main__':
         merge_cfg_from_list(args.set_cfgs)
 
     print('Pixel means: %s' % cfg.PIXEL_MEANS)
-    if args.dataset == "coco2017":
-        cfg.TEST.DATASETS = ('coco_2017_val',)
-        cfg.MODEL.NUM_CLASSES = 81
-    elif args.dataset == "keypoints_coco2017":
-        cfg.TEST.DATASETS = ('keypoints_coco_2017_val',)
-    elif args.dataset == 'coco_2017_objectness':
-        cfg.TEST.DATASETS = ('coco_2017_val_objectness',)
-        cfg.MODEL.NUM_CLASSES = 2
-    elif args.dataset == 'flyingthings':
-        cfg.TEST.DATASETS = ('flyingthings3d_test',)
-    elif args.dataset == 'flyingthings_train':
-        cfg.TEST.DATASETS = ('flyingthings3d_train',)
-    elif args.dataset == 'flyingthings_estimatedflow':
-        cfg.TEST.DATASETS = ('flyingthings3d_estimatedflow_test',)
-    elif args.dataset == 'flyingthings_estimatedflow_train':
-        cfg.TEST.DATASETS = ('flyingthings3d_estimatedflow_train',)
-    elif args.dataset == "fbms_flow":
-        cfg.TEST.DATASETS = ("fbms_flow_test",)
-    elif args.dataset == "fbms_flow_train":
-        cfg.TEST.DATASETS = ("fbms_flow_train",)
-    elif args.dataset == "davis_flow_moving":
-        cfg.TEST.DATASETS = ("davis_flow_moving_test",)
-    elif args.dataset == "davis_flow_moving_train":
-        cfg.TEST.DATASETS = ("davis_flow_moving_train",)
-    elif args.dataset is not None:
-        raise ValueError('Unknown --dataset: %s' % args.dataset)
-    else:  # For subprocess call
+    if args.dataset is None:
         assert cfg.TEST.DATASETS, 'cfg.TEST.DATASETS shouldn\'t be empty'
+    else:
+        if args.dataset not in dataset_catalog.DATASETS:
+            raise ValueError("Unexpected args.dataset: %s" % args.dataset)
+        dataset_info = dataset_catalog.DATASETS[args.dataset]
+        if dataset_catalog.NUM_CLASSES not in dataset_info:
+            raise ValueError(
+                "Num classes not listed in dataset: %s" % args.dataset)
+        cfg.MODEL.NUM_CLASSES = dataset_info[dataset_catalog.NUM_CLASSES]
 
-    if any(x in args.dataset for x in ('flyingthings', 'fbms', 'davis')):
-        cfg.PIXEL_MEANS = np.array([[[0, 0, 0]]])
-        cfg.MODEL.NUM_CLASSES = 2
-        cfg.TEST.FORCE_JSON_DATASET_EVAL = True
+        if any(x in args.dataset for x in ("flyingthings", "fbms", "davis")):
+            logging.info(
+                "Changing pixel mean to zero for dataset '%s'" % args.dataset)
+            logging.info("Forcing JSON dataset eval true for dataset '%s'" %
+                         args.dataset)
+            cfg.PIXEL_MEANS = np.zeros((1, 1, 3))
+            cfg.TEST.FORCE_JSON_DATASET_EVAL = True
+        cfg.TEST.DATASETS = (args.dataset, )
+
     assert_and_infer_cfg()
 
     logger.info('Testing with config:')

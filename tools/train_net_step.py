@@ -25,6 +25,7 @@ import nn as mynn
 import utils.net as net_utils
 import utils.misc as misc_utils
 from core.config import cfg, cfg_from_file, cfg_from_list, assert_and_infer_cfg
+from datasets import dataset_catalog
 from datasets.roidb import combined_roidb_for_training
 from roi_data.loader import RoiDataLoader, MinibatchSampler, BatchSampler, collate_minibatch
 from modeling.model_builder import Generalized_RCNN
@@ -160,33 +161,19 @@ def main():
     else:
         raise ValueError("Need Cuda device to run !")
 
-    if args.dataset == "coco2017":
-        cfg.TRAIN.DATASETS = ('coco_2017_train',)
-        cfg.MODEL.NUM_CLASSES = 81
-    elif args.dataset == "coco2017objectness":
-        cfg.TRAIN.DATASETS = ('coco_2017_train_objectness',)
-        cfg.MODEL.NUM_CLASSES = 2
-    elif args.dataset == "keypoints_coco2017":
-        cfg.TRAIN.DATASETS = ('keypoints_coco_2017_train',)
-        cfg.MODEL.NUM_CLASSES = 2
-    elif args.dataset == "flyingthings":
-        cfg.TRAIN.DATASETS = ("flyingthings3d_train",)
-        cfg.PIXEL_MEANS = np.array([[[0, 0, 0]]])
-        cfg.MODEL.NUM_CLASSES = 2
-    elif args.dataset == "flyingthings_estimated":
-        cfg.TRAIN.DATASETS = ("flyingthings3d_estimatedflow_train",)
-        cfg.PIXEL_MEANS = np.array([[[0, 0, 0]]])
-        cfg.MODEL.NUM_CLASSES = 2
-    elif args.dataset == "fbms_flow":
-        cfg.TRAIN.DATASETS = ("fbms_flow_train",)
-        cfg.PIXEL_MEANS = np.array([[[0, 0, 0]]])
-        cfg.MODEL.NUM_CLASSES = 2
-    elif args.dataset == "davis_flow_moving":
-        cfg.TRAIN.DATASETS = ("davis_flow_moving_train",)
-        cfg.PIXEL_MEANS = np.array([[[0, 0, 0]]])
-        cfg.MODEL.NUM_CLASSES = 2
-    else:
-        raise ValueError("Unexpected args.dataset: {}".format(args.dataset))
+    if args.dataset not in dataset_catalog.DATASETS:
+        raise ValueError("Unexpected args.dataset: %s" % args.dataset)
+    dataset_info = dataset_catalog.DATASETS[args.dataset]
+    if dataset_catalog.NUM_CLASSES not in dataset_info:
+        raise ValueError(
+            "Num classes not listed in dataset: %s" % args.dataset)
+    cfg.MODEL.NUM_CLASSES = dataset_info[dataset_catalog.NUM_CLASSES]
+
+    if any(x in args.dataset for x in ("flyingthings", "fbms", "davis")):
+        logging.info(
+            "Changing pixel mean to zero for dataset '%s'" % args.dataset)
+        cfg.PIXEL_MEANS = np.zeros((1, 1, 3))
+    cfg.TRAIN.DATASETS = (args.dataset, )
 
     cfg_from_file(args.cfg_file)
     if args.set_cfgs is not None:
