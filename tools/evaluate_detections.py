@@ -29,9 +29,9 @@ def main():
         args.output_dir = Path(
             args.detections).parent / ('%s-eval-out' % args.dataset)
         args.output_dir.mkdir(exist_ok=True)
-    utils.logging.setup_logging(args.output_dir / 'evaluate-detections.log')
-    logger = logging.getLogger(__name__)
-    logger.info('Args: %s', pformat(vars(args)))
+    logging_path = str(args.output_dir / 'evaluate-detections.log')
+    utils.logging.setup_logging(logging_path)
+    logging.info('Args: %s', pformat(vars(args)))
 
     if args.cfg_file is not None:
         merge_cfg_from_file(args.cfg_file)
@@ -60,8 +60,8 @@ def main():
     results = task_evaluation.evaluate_all(dataset, data['all_boxes'],
                                            data['all_segms'],
                                            data['all_keyps'], args.output_dir)
-    logger.info('Results:')
-    logger.info(results)
+    logging.info('Results:')
+    logging.info(results)
     task_evaluation.log_copy_paste_friendly_results(results)
 
 
