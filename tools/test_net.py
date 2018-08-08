@@ -5,6 +5,7 @@ import cv2
 import logging
 import os
 import pprint
+import subprocess
 import sys
 import time
 
@@ -81,6 +82,10 @@ if __name__ == '__main__':
 
     utils.logging.setup_logging(
         os.path.join(args.output_dir, 'evaluation.log'))
+    subprocess.call([
+        './git-state/save_git_state.sh',
+        os.path.join(args.output_dir, 'git-state')
+    ])
     logger = logging.getLogger(__name__)
     if output_dir_automatically_set:
         logger.info('Automatically set output directory to %s',
