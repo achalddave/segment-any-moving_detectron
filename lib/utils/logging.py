@@ -100,8 +100,17 @@ def send_email(subject, body, to):
     s.sendmail('detectron', to, mime.as_string())
 
 
-def setup_logging(logging_filepath):
-    """Setup logger to log to file and stdout."""
+def setup_logging(logging_filepath=None):
+    """Setup root logger, optionally to log also to stdout.
+
+    If logging_filepath is specified, all calls to logging will log to
+    `logging_filepath` as well as stdout.  Also creates a file logger that only
+    logs to `logging_filepath`, which can be retrieved with
+    logging.getLogger(logging_filepath).
+
+    Args:
+        logging_filepath (str): Path to log to.
+    """
     log_format = ('%(asctime)s %(filename)s:%(lineno)4d: ' '%(message)s')
     stream_date_format = '%H:%M:%S'
     file_date_format = '%m/%d %H:%M:%S'
@@ -109,6 +118,11 @@ def setup_logging(logging_filepath):
     # Clear any previous changes to logging.
     logging.root.handlers = []
     logging.root.setLevel(logging.INFO)
+
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(
+        logging.Formatter(log_format, datefmt=stream_date_format))
+    logging.root.addHandler(console_handler)
 
     if logging_filepath is not None:
         assert not Path(logging_filepath).exists(), (
@@ -119,7 +133,9 @@ def setup_logging(logging_filepath):
         logging.root.addHandler(file_handler)
         logging.info('Writing log file to %s', logging_filepath)
 
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(
-        logging.Formatter(log_format, datefmt=stream_date_format))
-    logging.root.addHandler(console_handler)
+        # Logger that logs only to file. We could also do this with levels, but
+        # this allows logging specific messages regardless of level to the file
+        # only (e.g. to save the diff of the current file to the log file).
+        file_logger = logging.getLogger(logging_filepath)
+        file_logger.addHandler(file_handler)
+        file_logger.propagate = False
