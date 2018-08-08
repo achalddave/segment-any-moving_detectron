@@ -13,7 +13,8 @@ import torch
 import numpy as np
 
 import _init_paths  # pylint: disable=unused-import
-from core.config import cfg, merge_cfg_from_file, merge_cfg_from_list, assert_and_infer_cfg
+from core.config import (cfg, merge_cfg_from_file, merge_cfg_from_cfg,
+                         merge_cfg_from_list, assert_and_infer_cfg)
 from core.test_engine import run_inference
 import utils.logging
 
@@ -98,7 +99,18 @@ if __name__ == '__main__':
     cfg.VIS = args.vis
 
     if args.cfg_file is not None:
-        merge_cfg_from_file(args.cfg_file)
+        if args.cfg_file.endswith('.pkl'):
+            import pickle
+            import yaml
+            with open(args.cfg_file, 'rb') as f:
+                other_cfg = yaml.load(pickle.load(f)['cfg'])
+                if ('FPN' in other_cfg
+                        and 'RPN_COLLECT_SCALE' in other_cfg['FPN']):
+                    other_cfg['FPN']['RPN_COLLECT_SCALE'] = int(
+                        other_cfg['FPN']['RPN_COLLECT_SCALE'])
+                merge_cfg_from_cfg(other_cfg)
+        else:
+            merge_cfg_from_file(args.cfg_file)
     if args.set_cfgs is not None:
         merge_cfg_from_list(args.set_cfgs)
 
