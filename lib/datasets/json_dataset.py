@@ -49,6 +49,7 @@ from .dataset_catalog import ANN_FN
 from .dataset_catalog import DATASETS
 from .dataset_catalog import IM_DIR
 from .dataset_catalog import IM_PREFIX
+from .dataset_catalog import IS_FLOW
 
 logger = logging.getLogger(__name__)
 
@@ -95,11 +96,15 @@ class JsonDataset(object):
         #     cfg.MODEL.NUM_CLASSES = 2 if cfg.MODEL.KEYPOINTS_ON else self.num_classes
 
     def load_image(self, entry):
-        if self.name.startswith('flyingthings'):
+        if DATASETS[self.name][IS_FLOW]:
             # R channel contains angle, G channel contains magnitude. Note that
             # this image is loaded in BGR format because of OpenCV.
             return load_flow_png(entry['image'])
         else:
+            assert all([
+                x not in self.name.lower() for x in
+                ['flyingthings', 'davis', 'flyingthings', 'ytvos', 'youtube']
+            ])
             return cv2.imread(entry['image'])
 
     @property
