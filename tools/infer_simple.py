@@ -120,12 +120,14 @@ def main():
     assert args.image_dir or args.images
     assert bool(args.image_dir) ^ bool(args.images)
 
+    input_is_flow = False
     if args.dataset in ('coco_2017_train_objectness',
                         'coco_2017_val_objectness'):
         dataset = datasets.get_objectness_dataset()
         cfg.MODEL.NUM_CLASSES = len(dataset.classes)
     elif any(x in args.dataset for x in ('flyingthings', 'fbms', 'davis')):
         dataset = datasets.get_objectness_dataset()
+        input_is_flow = True
         cfg.MODEL.NUM_CLASSES = len(dataset.classes)
         cfg.PIXEL_MEANS = np.array([[[0, 0, 0]]])
     elif args.dataset.startswith("coco"):
@@ -139,8 +141,6 @@ def main():
 
     logging.info('load cfg from file: {}'.format(args.cfg_file))
     cfg_from_file(args.cfg_file)
-
-    input_is_flow = args.dataset.startswith("flyingthings")
 
     if args.set_cfgs is not None:
         cfg_from_list(args.set_cfgs)
