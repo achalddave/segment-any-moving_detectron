@@ -2,6 +2,7 @@
 
 import argparse
 import os
+import socket
 import sys
 import pickle
 import resource
@@ -199,6 +200,7 @@ def main():
     logger.info('Args: %s', pprint.pformat(orig_args))
     logger.info('Config: %s', pprint.pformat(cfg))
     logger.info('Experiment id: %s', experiment_id)
+    logger.info('Server host name: %s', socket.gethostname())
 
     ### Adaptively adjust some configs ###
     original_batch_size = cfg.NUM_GPUS * cfg.TRAIN.IMS_PER_BATCH
