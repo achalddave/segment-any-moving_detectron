@@ -109,14 +109,29 @@ if __name__ == '__main__':
             import yaml
             with open(args.cfg_file, 'rb') as f:
                 other_cfg = yaml.load(pickle.load(f)['cfg'])
-                if ('FPN' in other_cfg
-                        and 'RPN_COLLECT_SCALE' in other_cfg['FPN']):
+                # For some reason, the RPN_COLLECT_SCALE defaults to a float,
+                # but is required to be an int by the config loading code, so
+                # we update it to be an int.
+                try:
                     other_cfg['FPN']['RPN_COLLECT_SCALE'] = int(
                         other_cfg['FPN']['RPN_COLLECT_SCALE'])
+                except KeyError:
+                    pass
+
+                from pathlib import Path
+                detectron_dir = Path(__file__).parent.parent
+                if Path(other_cfg['ROOT_DIR']) != detectron_dir:
+                    other_cfg['ROOT_DIR'] = str(detectron_dir)
+                    logging.info(
+                        'Updating ROOT_DIR in loaded config to '
+                        'current ROOT_DIR: %s' % other_cfg['ROOT_DIR'])
+
                 merge_cfg_from_cfg(other_cfg)
         else:
             merge_cfg_from_file(args.cfg_file)
+
     if args.set_cfgs is not None:
+        print('Setting cfgs')
         merge_cfg_from_list(args.set_cfgs)
 
     print('Pixel means: %s' % cfg.PIXEL_MEANS)
