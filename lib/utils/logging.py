@@ -37,7 +37,8 @@ json.encoder.FLOAT_REPR = lambda o: format(o, '.6f')
 
 
 def log_json_stats(stats, sort_keys=True):
-    print('json_stats: {:s}'.format(json.dumps(stats, sort_keys=sort_keys)))
+    logging.info('json_stats: {:s}'.format(
+        json.dumps(stats, sort_keys=sort_keys)))
 
 
 def log_stats(stats, misc_args):
@@ -62,7 +63,8 @@ def log_stats(stats, misc_args):
     if cfg.FPN.FPN_ON:
         lines += "\t\t" + ", ".join("%s: %.6f" % (k, v) for k, v in stats['rpn_fpn_cls_losses'].items()) + "\n"
         lines += "\t\t" + ", ".join("%s: %.6f" % (k, v) for k, v in stats['rpn_fpn_bbox_losses'].items()) + "\n"
-    print(lines[:-1])  # remove last new line
+    lines = '\n' + lines  # Add a new line to separate logging header
+    logging.info(lines[:-1])  # remove last new line
 
 
 class SmoothedValue(object):
