@@ -4,6 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import six
+import logging
 import os
 import os.path as osp
 import copy
@@ -1012,13 +1013,16 @@ def assert_and_infer_cfg(make_immutable=True):
     that's harder to understand than is necessary).
     """
     if __C.MODEL.RPN_ONLY or __C.MODEL.FASTER_RCNN:
+        logging.info('Setting RPN.RPN_ON to True')
         __C.RPN.RPN_ON = True
     if __C.RPN.RPN_ON or __C.RETINANET.RETINANET_ON:
+        logging.info('Setting TEST.PRECOMPUTED_PROPOSALS to False')
         __C.TEST.PRECOMPUTED_PROPOSALS = False
     if __C.MODEL.LOAD_IMAGENET_PRETRAINED_WEIGHTS:
         assert __C.RESNETS.IMAGENET_PRETRAINED_WEIGHTS, \
             "Path to the weight file must not be empty to load imagenet pertrained resnets."
     if set([__C.MRCNN.ROI_MASK_HEAD, __C.KRCNN.ROI_KEYPOINTS_HEAD]) & _SHARE_RES5_HEADS:
+        logging.info('Setting MODEL.SHARE_RES5 to True')
         __C.MODEL.SHARE_RES5 = True
     if version.parse(torch.__version__) < version.parse('0.4.0'):
         __C.PYTORCH_VERSION_LESS_THAN_040 = True
