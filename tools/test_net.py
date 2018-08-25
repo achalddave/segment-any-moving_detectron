@@ -146,9 +146,8 @@ if __name__ == '__main__':
                 "Num classes not listed in dataset: %s" % args.dataset)
         cfg.MODEL.NUM_CLASSES = dataset_info[dataset_catalog.NUM_CLASSES]
 
-        if any(x in args.dataset for x in ("flyingthings", "fbms", "davis")):
-            logging.info(
-                "Changing pixel mean to zero for dataset '%s'" % args.dataset)
+        if any(x in args.dataset
+               for x in ("flyingthings", "fbms", "davis", "ytvos")):
             logging.info("Forcing JSON dataset eval true for dataset '%s'" %
                          args.dataset)
             cfg.TEST.FORCE_JSON_DATASET_EVAL = True

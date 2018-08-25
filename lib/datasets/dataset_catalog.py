@@ -37,6 +37,8 @@ IM_PREFIX = 'image_prefix'
 DEVKIT_DIR = 'devkit_directory'
 RAW_DIR = 'raw_dir'
 IS_FLOW = 'is_flow'
+# If specified, change the extension of the image file_name.
+IMAGE_EXTENSION = 'image_extension'
 
 # Available datasets
 DATASETS = {
@@ -238,6 +240,59 @@ DATASETS = {
         NUM_CLASSES: 2,
         IS_FLOW: True
     },
+    'ytvos_rgb_all_moving_sub_train_8-21-18': {
+        IM_DIR: _DATA_DIR + '/ytvos/rgb/train',
+        ANN_FN: _DATA_DIR + '/ytvos/all-moving-8-21-18/sub-train-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True,
+        IMAGE_EXTENSION: '.png'
+    },
+    'ytvos_rgb_all_moving_sub_val_8-21-18': {
+        IM_DIR: _DATA_DIR + '/ytvos/rgb/train',
+        ANN_FN: _DATA_DIR + '/ytvos/all-moving-8-21-18/sub-val-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True,
+    },
+    'ytvos_rgb_all_moving_strict_sub_train_8-21-18': {
+        IM_DIR: _DATA_DIR + '/ytvos/rgb/train',
+        ANN_FN: _DATA_DIR + '/ytvos/all-moving-8-21-18/strict/sub-train-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False,
+    },
+    'ytvos_rgb_all_moving_strict_sub_val_8-21-18': {
+        IM_DIR: _DATA_DIR + '/ytvos/rgb/train',
+        ANN_FN: _DATA_DIR + '/ytvos/all-moving-8-21-18/strict/sub-val-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False,
+    },
+    'ytvos_flow_all_moving_sub_train_8-21-18': {
+        IM_DIR: _DATA_DIR + '/ytvos/liteflownet/train',
+        ANN_FN: _DATA_DIR + '/ytvos/all-moving-8-21-18/sub-train-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True,
+        IMAGE_EXTENSION: '.png'
+    },
+    'ytvos_flow_all_moving_sub_val_8-21-18': {
+        IM_DIR: _DATA_DIR + '/ytvos/liteflownet/train',
+        ANN_FN: _DATA_DIR + '/ytvos/all-moving-8-21-18/sub-val-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True,
+        IMAGE_EXTENSION: '.png'
+    },
+    'ytvos_flow_all_moving_strict_sub_train_8-21-18': {
+        IM_DIR: _DATA_DIR + '/ytvos/liteflownet/train',
+        ANN_FN: _DATA_DIR + '/ytvos/all-moving-8-21-18/strict/sub-train-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True,
+        IMAGE_EXTENSION: '.png'
+    },
+    'ytvos_flow_all_moving_strict_sub_val_8-21-18': {
+        IM_DIR: _DATA_DIR + '/ytvos/liteflownet/train',
+        ANN_FN: _DATA_DIR + '/ytvos/all-moving-8-21-18/strict/sub-val-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True,
+        IMAGE_EXTENSION: '.png'
+    },
     'keypoints_coco_2014_train': {
         IM_DIR:
             _DATA_DIR + '/coco/images/train2014',
@@ -338,3 +393,7 @@ DATASETS = {
         IS_FLOW: False
     }
 }
+
+for dataset, info in DATASETS.items():
+    if IMAGE_EXTENSION not in info:
+        info[IMAGE_EXTENSION] = None

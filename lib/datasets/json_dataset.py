@@ -49,7 +49,7 @@ from .dataset_catalog import ANN_FN
 from .dataset_catalog import DATASETS
 from .dataset_catalog import IM_DIR
 from .dataset_catalog import IM_PREFIX
-from .dataset_catalog import IS_FLOW
+from .dataset_catalog import IS_FLOW, IMAGE_EXTENSION
 
 logger = logging.getLogger(__name__)
 
@@ -101,10 +101,8 @@ class JsonDataset(object):
             # this image is loaded in BGR format because of OpenCV.
             return load_flow_png(entry['image'])
         else:
-            assert all([
-                x not in self.name.lower() for x in
-                ['flyingthings', 'davis', 'flyingthings', 'ytvos', 'youtube']
-            ])
+            # For debugging and catching future possible mistakes.
+            assert 'flow_vis' in self.name or 'flow' not in self.name
             return cv2.imread(entry['image'])
 
     @property
@@ -196,6 +194,12 @@ class JsonDataset(object):
         im_path = os.path.join(
             self.image_directory, self.image_prefix + entry['file_name']
         )
+        if DATASETS[self.name][IMAGE_EXTENSION] is not None:
+            new_extension = DATASETS[self.name][IMAGE_EXTENSION]
+            if new_extension[0] != '.':
+                new_extension = '.' + new_extension
+            im_path = str(Path(im_path).with_suffix(new_extension))
+
         assert os.path.exists(im_path), 'Image \'{}\' not found'.format(im_path)
         entry['image'] = im_path
         entry['flipped'] = False
