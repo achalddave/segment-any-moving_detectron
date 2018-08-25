@@ -48,6 +48,10 @@ def parse_args():
         help='set config keys, will overwrite config in the cfg_file.'
              ' See lib/core/config.py for all options',
         default=[], nargs='*')
+    parser.add_argument(
+        '--objectness_eval', action='store_true',
+        help=('Collapse all predicted categories to one category. Useful for '
+              'evaluating object-specific detectors on objectness datasets.'))
 
     parser.add_argument(
         '--range',
@@ -135,6 +139,10 @@ if __name__ == '__main__':
             cfg.PIXEL_MEANS = np.zeros((1, 1, 3))
             cfg.TEST.FORCE_JSON_DATASET_EVAL = True
         cfg.TEST.DATASETS = (args.dataset, )
+
+    if args.objectness_eval:
+        assert cfg.MODEL.NUM_CLASSES == 2
+        cfg.MODEL.NUM_CLASSES = 81
 
     assert_and_infer_cfg()
 

@@ -137,6 +137,41 @@ def run_inference(
     return all_results
 
 
+def collapse_categories(all_boxes, all_segms, all_keyps):
+    """Collapse predictions for multiple categories into one category.
+
+    Used for evaluating a multi-class, object-specific model on an
+    object-agnostic / objectness dataset."""
+    def flatten(lst):
+        return [x for y in lst for x in y]
+
+    if len(all_boxes) > 2:
+        # all_boxes[0] contains boxes for background, and then
+        # all_boxes[c][i] contains boxes for category c, image i.
+        # We collapse across the categories. This is similar for
+        # segmentations and keypoints.
+        num_images = len(all_boxes[1])
+        all_boxes = [all_boxes[0], []]
+        for i in range(num_images):
+            all_boxes[1].append(
+                np.vstack([x[i] for x in all_boxes[1:]]))
+        all_boxes = all_boxes
+
+        all_segms = [all_segms[0], []]
+        for i in range(num_images):
+            all_segms[1].append(
+                flatten([x[i] for x in all_segms[1:]]))
+        all_segms = all_segms
+
+        all_keyps = [all_keyps[0], []]
+        for i in range(num_images):
+            all_keyps[1].append(
+                flatten([x[i] for x in all_keyps[1:]]))
+        all_keyps = all_keyps
+
+    return all_boxes, all_segms, all_keyps
+
+
 def test_net_on_dataset(
         args,
         dataset_name,
@@ -198,8 +233,13 @@ def multi_gpu_test_net_on_dataset(
             all_boxes[cls_idx] += all_boxes_batch[cls_idx]
             all_segms[cls_idx] += all_segms_batch[cls_idx]
             all_keyps[cls_idx] += all_keyps_batch[cls_idx]
+
+
     det_file = os.path.join(output_dir, 'detections.pkl')
     cfg_yaml = yaml.dump(cfg)
+    if hasattr(args, 'objectness_eval') and args.objectness_eval:
+        all_boxes, all_segms, all_keyps = collapse_categories(
+            all_boxes, all_segms, all_keyps)
     save_object(
         dict(
             all_boxes=all_boxes,
@@ -306,6 +346,11 @@ def test_net(
     else:
         det_name = 'detections.pkl'
     det_file = os.path.join(output_dir, det_name)
+
+    if hasattr(args, 'objectness_eval') and args.objectness_eval:
+        all_boxes, all_segms, all_keyps = collapse_categories(
+            all_boxes, all_segms, all_keyps)
+
     save_object(
         dict(
             all_boxes=all_boxes,

@@ -8,6 +8,7 @@ import _init_paths  # pylint: disable=unused-import
 import utils.logging
 from core.config import cfg, merge_cfg_from_file, assert_and_infer_cfg
 from datasets import load_dataset, task_evaluation
+from test_engine import collapse_categories
 
 
 def main():
@@ -83,29 +84,9 @@ def main():
             return [x for y in lst for x in y]
 
         if len(data['all_boxes']) > 2:
-            import numpy as np
-            # data['all_boxes'][0] contains boxes for background, and then
-            # data['all_boxes'][c][i] contains boxes for category c, image i.
-            # We collapse across the categories. This is similar for
-            # segmentations and keypoints.
-            num_images = len(data['all_boxes'][1])
-            all_boxes = [data['all_boxes'][0], []]
-            for i in range(num_images):
-                all_boxes[1].append(
-                    np.vstack([x[i] for x in data['all_boxes'][1:]]))
-            data['all_boxes'] = all_boxes
-
-            all_segms = [data['all_segms'][0], []]
-            for i in range(num_images):
-                all_segms[1].append(
-                    flatten([x[i] for x in data['all_segms'][1:]]))
-            data['all_segms'] = all_segms
-
-            all_keyps = [data['all_keyps'][0], []]
-            for i in range(num_images):
-                all_keyps[1].append(
-                    flatten([x[i] for x in data['all_keyps'][1:]]))
-            data['all_keysp'] = all_keyps
+            data['all_boxes'], data['all_segms'], data['all_keyps'] = (
+                collapse_categories(data['all_boxes'], data['all_segms'],
+                                    data['all_keyps']))
     results = task_evaluation.evaluate_all(dataset, data['all_boxes'],
                                            data['all_segms'],
                                            data['all_keyps'], args.output_dir)
