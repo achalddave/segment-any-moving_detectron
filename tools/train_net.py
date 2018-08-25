@@ -139,6 +139,9 @@ def parse_args():
 def main():
     """Main function"""
 
+    print('ERROR: Use train_net_step.py instead!')
+    sys.exit(1)
+
     args = parse_args()
     print('Called with args:')
     print(args)
