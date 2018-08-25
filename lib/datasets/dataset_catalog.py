@@ -184,6 +184,22 @@ DATASETS = {
             _DATA_DIR + '/coco/annotations/stuff_val.json',
         IS_FLOW: False
     },
+    'flyingthings3d_rgb_train': {
+        IM_DIR:
+            _DATA_DIR + '/flyingthings3d/rgb_images/',
+        ANN_FN:
+            _DATA_DIR + '/flyingthings3d/annotations/train-without-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
+    },
+    'flyingthings3d_rgb_test': {
+        IM_DIR:
+            _DATA_DIR + '/flyingthings3d/rgb_images/',
+        ANN_FN:
+            _DATA_DIR + '/flyingthings3d/annotations/test-without-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
+    },
     'flyingthings3d_gtflow_train': {
         IM_DIR:
             _DATA_DIR + '/flyingthings3d/gt_flow_images/',
@@ -197,6 +213,14 @@ DATASETS = {
             _DATA_DIR + '/flyingthings3d/gt_flow_images/',
         ANN_FN:
             _DATA_DIR + '/flyingthings3d/annotations/test-without-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    'flyingthings3d_gtflow_3369_subset_train': {
+        IM_DIR:
+            _DATA_DIR + '/flyingthings3d/gt_flow_images/',
+        ANN_FN:
+            _DATA_DIR + '/flyingthings3d/annotations/train-without-last-frame_subset-3369.json',
         NUM_CLASSES: 2,
         IS_FLOW: True
     },
@@ -228,9 +252,51 @@ DATASETS = {
         NUM_CLASSES: 2,
         IS_FLOW: True
     },
+    'davis_rgb_moving_train': {
+        IM_DIR: _DATA_DIR + '/davis/JPEGImages/',
+        ANN_FN: _DATA_DIR + '/davis/annotations/moving-train-no-last-frame_jpg-extension.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
+    },
+    'davis_rgb_moving_trainval': {
+        IM_DIR: _DATA_DIR + '/davis/JPEGImages/',
+        ANN_FN: _DATA_DIR + '/davis/annotations/moving-trainval-no-last-frame_jpg-extension.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
+    },
+    'davis_rgb_moving_test': {
+        IM_DIR: _DATA_DIR + '/davis/JPEGImages/',
+        ANN_FN: _DATA_DIR + '/davis/annotations/moving-test-no-last-frame_jpg-extension.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
+    },
+    'davis_flow_relabeled_moving_train': {
+        IM_DIR: _DATA_DIR + '/davis/liteflownet/',
+        ANN_FN: _DATA_DIR + '/davis/annotations-always-moving/moving-train-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    'davis_flow_relabeled_moving_trainval': {
+        IM_DIR: _DATA_DIR + '/davis/liteflownet/',
+        ANN_FN: _DATA_DIR + '/davis/annotations-always-moving/moving-trainval-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    'davis_flow_relabeled_moving_test': {
+        IM_DIR: _DATA_DIR + '/davis/liteflownet/',
+        ANN_FN: _DATA_DIR + '/davis/annotations-always-moving/moving-test-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
     'davis_flow_moving_train': {
         IM_DIR: _DATA_DIR + '/davis/liteflownet/',
         ANN_FN: _DATA_DIR + '/davis/annotations/moving-train-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    'davis_flow_moving_trainval': {
+        IM_DIR: _DATA_DIR + '/davis/liteflownet/',
+        ANN_FN: _DATA_DIR + '/davis/annotations/moving-trainval-no-last-frame.json',
         NUM_CLASSES: 2,
         IS_FLOW: True
     },
@@ -239,6 +305,74 @@ DATASETS = {
         ANN_FN: _DATA_DIR + '/davis/annotations/moving-test-no-last-frame.json',
         NUM_CLASSES: 2,
         IS_FLOW: True
+    },
+    'davis16_flow_train': {
+        IM_DIR: _DATA_DIR + '/davis16/liteflownet/',
+        ANN_FN: _DATA_DIR + '/davis16/annotations/train-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    'davis16_flow_val': {
+        IM_DIR: _DATA_DIR + '/davis16/liteflownet/',
+        ANN_FN: _DATA_DIR + '/davis16/annotations/val-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    'davis16_rgb_train': {
+        IM_DIR: _DATA_DIR + '/davis16/JPEGImages/',
+        ANN_FN: _DATA_DIR + '/davis16/annotations/train-no-last-frame_jpg-extension.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
+    },
+    'davis16_rgb_val': {
+        IM_DIR: _DATA_DIR + '/davis16/JPEGImages/',
+        ANN_FN: _DATA_DIR + '/davis16/annotations/val-no-last-frame_jpg-extension.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
+    },
+    # The "moving" splits for DAVIS 16 contain all the videos from DAVIS 16,
+    # but the splits respect the splits made for DAVIS 17 moving videos above.
+    'davis16_flow_moving_train': {
+        IM_DIR: _DATA_DIR + '/davis16/liteflownet/',
+        ANN_FN: _DATA_DIR + '/davis16/moving-annotations/train-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    'davis16_flow_moving_test': {
+        IM_DIR: _DATA_DIR + '/davis16/liteflownet/',
+        ANN_FN: _DATA_DIR + '/davis16/moving-annotations/test-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    'davis16_rgb_moving_train': {
+        IM_DIR: _DATA_DIR + '/davis16/JPEGImages/',
+        ANN_FN: _DATA_DIR + '/davis16/moving-annotations/train-no-last-frame_jpg-extension.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
+    },
+    'davis16_rgb_moving_test': {
+        IM_DIR: _DATA_DIR + '/davis16/JPEGImages/',
+        ANN_FN: _DATA_DIR + '/davis16/moving-annotations/test-no-last-frame_jpg-extension.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
+    },
+    'davis_flow_vis_moving_train': {
+        IM_DIR: _DATA_DIR + '/davis/liteflownet-vis/',
+        ANN_FN: _DATA_DIR + '/davis/annotations/moving-train-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
+    },
+    'davis_flow_vis_moving_trainval': {
+        IM_DIR: _DATA_DIR + '/davis/liteflownet-vis/',
+        ANN_FN: _DATA_DIR + '/davis/annotations/moving-trainval-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
+    },
+    'davis_flow_vis_moving_test': {
+        IM_DIR: _DATA_DIR + '/davis/liteflownet-vis/',
+        ANN_FN: _DATA_DIR + '/davis/annotations/moving-test-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
     },
     'ytvos_rgb_all_moving_sub_train_8-21-18': {
         IM_DIR: _DATA_DIR + '/ytvos/rgb/train',
