@@ -181,7 +181,7 @@ def main():
         cfg_from_list(args.set_cfgs)
 
     ### Training Setups ###
-    args.run_name = args.run_name_prefix + misc_utils.get_run_name() + '_step'
+    args.run_name = args.run_name_prefix + misc_utils.get_run_name()
     args.cfg_filename = os.path.basename(args.cfg_file)
     output_dir = misc_utils.get_output_dir(args, args.run_name)
     if not args.no_save:
