@@ -151,8 +151,12 @@ if __name__ == '__main__':
                 "Changing pixel mean to zero for dataset '%s'" % args.dataset)
             logging.info("Forcing JSON dataset eval true for dataset '%s'" %
                          args.dataset)
-            cfg.PIXEL_MEANS = np.zeros((1, 1, 3))
             cfg.TEST.FORCE_JSON_DATASET_EVAL = True
+        if (dataset_info[dataset_catalog.IS_FLOW]
+                and not args.cfg_file.endswith('.pkl')):
+            logging.info("Changing pixel mean to zero for dataset '%s'" %
+                         args.dataset)
+            cfg.PIXEL_MEANS = np.zeros((1, 1, 3))
         cfg.TEST.DATASETS = (args.dataset, )
 
     if args.objectness_eval:

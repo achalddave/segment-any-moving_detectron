@@ -170,7 +170,7 @@ def main():
             "Num classes not listed in dataset: %s" % args.dataset)
     cfg.MODEL.NUM_CLASSES = dataset_info[dataset_catalog.NUM_CLASSES]
 
-    if any(x in args.dataset for x in ("flyingthings", "fbms", "davis")):
+    if dataset_info[dataset_catalog.IS_FLOW]:
         logging.info(
             "Changing pixel mean to zero for dataset '%s'" % args.dataset)
         cfg.PIXEL_MEANS = np.zeros((1, 1, 3))
