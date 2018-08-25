@@ -28,13 +28,15 @@ from torch.autograd import Variable
 
 import _init_paths
 import nn as mynn
-from core.config import cfg, cfg_from_file, cfg_from_list, assert_and_infer_cfg
+from core.config import (cfg, cfg_from_file, merge_cfg_from_cfg, cfg_from_list,
+                         assert_and_infer_cfg)
 from core.test import im_detect_all
 from modeling.model_builder import Generalized_RCNN
 import datasets.dummy_datasets as datasets
 import utils.misc as misc_utils
 import utils.net as net_utils
 import utils.vis as vis_utils
+from datasets import dataset_catalog
 from utils.detectron_weight_helper import load_detectron_weight
 from utils.flow import load_flow_png
 from utils.logging import setup_logging
@@ -121,26 +123,67 @@ def main():
     assert bool(args.image_dir) ^ bool(args.images)
 
     input_is_flow = False
-    if args.dataset in ('coco_2017_train_objectness',
-                        'coco_2017_val_objectness'):
+    # if args.dataset in ('coco_2017_train_objectness',
+    #                     'coco_2017_val_objectness'):
+    #     dataset = datasets.get_objectness_dataset()
+    #     cfg.MODEL.NUM_CLASSES = len(dataset.classes)
+    # elif any(x in args.dataset for x in ('flyingthings', 'fbms', 'davis')):
+    #     dataset = datasets.get_objectness_dataset()
+    #     input_is_flow = True
+    #     cfg.MODEL.NUM_CLASSES = len(dataset.classes)
+    #     cfg.PIXEL_MEANS = np.array([[[0, 0, 0]]])
+    # elif args.dataset.startswith("coco"):
+    #     dataset = datasets.get_coco_dataset()
+    #     cfg.MODEL.NUM_CLASSES = len(dataset.classes)
+    # elif args.dataset.startswith("keypoints_coco"):
+    #     dataset = datasets.get_coco_dataset()
+    #     cfg.MODEL.NUM_CLASSES = 2
+    # else:
+    #     raise ValueError('Unexpected dataset name: {}'.format(args.dataset))
+
+    if args.dataset not in dataset_catalog.DATASETS:
+        raise ValueError("Unexpected args.dataset: %s" % args.dataset)
+    dataset_info = dataset_catalog.DATASETS[args.dataset]
+    if dataset_catalog.NUM_CLASSES not in dataset_info:
+        raise ValueError(
+            "Num classes not listed in dataset: %s" % args.dataset)
+    cfg.MODEL.NUM_CLASSES = dataset_info[dataset_catalog.NUM_CLASSES]
+
+    if cfg.MODEL.NUM_CLASSES == 2:
         dataset = datasets.get_objectness_dataset()
-        cfg.MODEL.NUM_CLASSES = len(dataset.classes)
-    elif any(x in args.dataset for x in ('flyingthings', 'fbms', 'davis')):
-        dataset = datasets.get_objectness_dataset()
-        input_is_flow = True
-        cfg.MODEL.NUM_CLASSES = len(dataset.classes)
-        cfg.PIXEL_MEANS = np.array([[[0, 0, 0]]])
-    elif args.dataset.startswith("coco"):
+    elif cfg.MODEL.NUM_CLASSES == 81:
         dataset = datasets.get_coco_dataset()
-        cfg.MODEL.NUM_CLASSES = len(dataset.classes)
-    elif args.dataset.startswith("keypoints_coco"):
-        dataset = datasets.get_coco_dataset()
-        cfg.MODEL.NUM_CLASSES = 2
-    else:
-        raise ValueError('Unexpected dataset name: {}'.format(args.dataset))
+
+    if (dataset_info[dataset_catalog.IS_FLOW]
+            and not args.cfg_file.endswith('.pkl')):
+        logging.info(
+            "Changing pixel mean to zero for dataset '%s'" % args.dataset)
+        cfg.PIXEL_MEANS = np.zeros((1, 1, 3))
 
     logging.info('load cfg from file: {}'.format(args.cfg_file))
-    cfg_from_file(args.cfg_file)
+    if args.cfg_file.endswith('.pkl'):
+        import yaml
+        with open(args.cfg_file, 'rb') as f:
+            other_cfg = yaml.load(pickle.load(f)['cfg'])
+            # For some reason, the RPN_COLLECT_SCALE defaults to a float,
+            # but is required to be an int by the config loading code, so
+            # we update it to be an int.
+            try:
+                other_cfg['FPN']['RPN_COLLECT_SCALE'] = int(
+                    other_cfg['FPN']['RPN_COLLECT_SCALE'])
+            except KeyError:
+                pass
+
+            detectron_dir = Path(__file__).parent.parent
+            if Path(other_cfg['ROOT_DIR']) != detectron_dir:
+                other_cfg['ROOT_DIR'] = str(detectron_dir)
+                logging.info(
+                    'Updating ROOT_DIR in loaded config to '
+                    'current ROOT_DIR: %s' % other_cfg['ROOT_DIR'])
+
+            merge_cfg_from_cfg(other_cfg)
+    else:
+        cfg_from_file(args.cfg_file)
 
     if args.set_cfgs is not None:
         cfg_from_list(args.set_cfgs)
