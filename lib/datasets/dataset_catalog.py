@@ -399,6 +399,13 @@ DATASETS = {
         NUM_CLASSES: 2,
         IS_FLOW: False,
     },
+    'ytvos_flow_sub_train_8-21-18': {
+        IM_DIR: _DATA_DIR + '/ytvos/liteflownet/train',
+        ANN_FN: _DATA_DIR + '/ytvos/train-splits/sub-train-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True,
+        IMAGE_EXTENSION: '.png'
+    },
     'ytvos_flow_all_moving_sub_train_8-21-18': {
         IM_DIR: _DATA_DIR + '/ytvos/liteflownet/train',
         ANN_FN: _DATA_DIR + '/ytvos/all-moving-8-21-18/sub-train-no-last-frame.json',
