@@ -23,27 +23,27 @@ def load_pretrained_imagenet_weights(model):
             src_blobs = pickle.load(fp, encoding='latin1')
         if 'blobs' in src_blobs:
             src_blobs = src_blobs['blobs']
-        pretrianed_state_dict = src_blobs
+        pretrained_state_dict = src_blobs
     else:
         weights_file = os.path.join(cfg.ROOT_DIR, cfg.RESNETS.IMAGENET_PRETRAINED_WEIGHTS)
-        pretrianed_state_dict = convert_state_dict(torch.load(weights_file))
+        pretrained_state_dict = convert_state_dict(torch.load(weights_file))
 
         # Convert batchnorm weights
         for name, mod in model.named_modules():
             if isinstance(mod, mynn.AffineChannel2d):
                 if cfg.FPN.FPN_ON:
-                    pretrianed_name = name.split('.', 2)[-1]
+                    pretrained_name = name.split('.', 2)[-1]
                 else:
-                    pretrianed_name = name.split('.', 1)[-1]
-                bn_mean = pretrianed_state_dict[pretrianed_name + '.running_mean']
-                bn_var = pretrianed_state_dict[pretrianed_name + '.running_var']
-                scale = pretrianed_state_dict[pretrianed_name + '.weight']
-                bias = pretrianed_state_dict[pretrianed_name + '.bias']
+                    pretrained_name = name.split('.', 1)[-1]
+                bn_mean = pretrained_state_dict[pretrained_name + '.running_mean']
+                bn_var = pretrained_state_dict[pretrained_name + '.running_var']
+                scale = pretrained_state_dict[pretrained_name + '.weight']
+                bias = pretrained_state_dict[pretrained_name + '.bias']
                 std = torch.sqrt(bn_var + 1e-5)
                 new_scale = scale / std
                 new_bias = bias - bn_mean * scale / std
-                pretrianed_state_dict[pretrianed_name + '.weight'] = new_scale
-                pretrianed_state_dict[pretrianed_name + '.bias'] = new_bias
+                pretrained_state_dict[pretrained_name + '.weight'] = new_scale
+                pretrained_state_dict[pretrained_name + '.bias'] = new_bias
 
     model_state_dict = model.state_dict()
 
@@ -55,13 +55,13 @@ def load_pretrained_imagenet_weights(model):
         if isinstance(v, str):  # maybe a str, None or True
             if pattern.match(v):
                 if cfg.FPN.FPN_ON:
-                    pretrianed_key = k.split('.', 2)[-1]
+                    pretrained_key = k.split('.', 2)[-1]
                 else:
-                    pretrianed_key = k.split('.', 1)[-1]
+                    pretrained_key = k.split('.', 1)[-1]
                 if ext == '.pkl':
-                    model_state_dict[k].copy_(torch.Tensor(pretrianed_state_dict[v]))
+                    model_state_dict[k].copy_(torch.Tensor(pretrained_state_dict[v]))
                 else:
-                    model_state_dict[k].copy_(pretrianed_state_dict[pretrianed_key])
+                    model_state_dict[k].copy_(pretrained_state_dict[pretrained_key])
 
 
 def convert_state_dict(src_dict):
