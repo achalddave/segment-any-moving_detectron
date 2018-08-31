@@ -61,7 +61,7 @@ def main():
     if (args.dataset in ('coco_2017_train_objectness',
                          'coco_2017_val_objectness')
             or any(x in args.dataset
-                   for x in ['flyingthings', 'fbms', 'davis'])):
+                   for x in ['flyingthings', 'fbms', 'davis', 'ytvos'])):
         dataset = datasets.get_objectness_dataset()
     elif args.dataset.startswith("coco"):
         dataset = datasets.get_coco_dataset()
