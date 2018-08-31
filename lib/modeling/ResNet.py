@@ -230,6 +230,17 @@ def basic_bn_stem():
         ('maxpool', nn.MaxPool2d(kernel_size=3, stride=2, padding=1))]))
 
 
+def basic_bn_stem_stacked_flow():
+    """ResNet stem that takes as input stacked optical flow frames."""
+    num_input_channels = 3 * cfg.DATA_LOADER.NUM_STACKED_FRAMES
+    return nn.Sequential(OrderedDict([
+        ('conv1', nn.Conv2d(
+            num_input_channels, 64, 7, stride=2, padding=3, bias=False)),
+        ('bn1', mynn.AffineChannel2d(64)),
+        ('relu', nn.ReLU(inplace=True)),
+        ('maxpool', nn.MaxPool2d(kernel_size=3, stride=2, padding=1))]))
+
+
 def basic_gn_stem():
     return nn.Sequential(OrderedDict([
         ('conv1', nn.Conv2d(3, 64, 7, stride=2, padding=3, bias=False)),

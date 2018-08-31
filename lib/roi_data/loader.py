@@ -252,7 +252,9 @@ def pad_image_data(list_of_blobs):
     max_shape = blob_utils.get_max_shape([blobs['data'].shape[1:] for blobs in list_of_blobs])
     output_list = []
     for blobs in list_of_blobs:
-        data_padded = np.zeros((3, max_shape[0], max_shape[1]), dtype=np.float32)
+        data_padded = np.zeros(
+            (3 * cfg.DATA_LOADER.NUM_STACKED_FRAMES,
+             max_shape[0], max_shape[1]), dtype=np.float32)
         _, h, w = blobs['data'].shape
         data_padded[:, :h, :w] = blobs['data']
         blobs['data'] = data_padded

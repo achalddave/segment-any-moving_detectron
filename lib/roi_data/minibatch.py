@@ -55,23 +55,34 @@ def _get_image_blob(roidb):
     processed_ims = []
     im_scales = []
     for i in range(num_images):
-        im = roidb[i]['dataset'].load_image(roidb[i])
-        assert im is not None, \
-            'Failed to read image \'{}\''.format(roidb[i]['image'])
-        # If NOT using opencv to read in images, uncomment following lines
-        # if len(im.shape) == 2:
-        #     im = im[:, :, np.newaxis]
-        #     im = np.concatenate((im, im, im), axis=2)
-        # # flip the channel, since the original one using cv2
-        # # rgb -> bgr
-        # im = im[:, :, ::-1]
-        if roidb[i]['flipped']:
-            im = im[:, ::-1, :]
-        target_size = cfg.TRAIN.SCALES[scale_inds[i]]
-        im, im_scale = blob_utils.prep_im_for_blob(
-            im, cfg.PIXEL_MEANS, [target_size], cfg.TRAIN.MAX_SIZE)
-        im_scales.append(im_scale[0])
-        processed_ims.append(im[0])
+        sequence = roidb[i]['dataset'].load_sequence(
+            roidb[i], cfg.DATA_LOADER.NUM_STACKED_FRAMES)
+        processed_ims_sequence = []
+        for im in sequence:
+            assert im is not None, \
+                'Failed to read image \'{}\''.format(roidb[i]['image'])
+            # If NOT using opencv to read in images, uncomment following lines
+            # if len(im.shape) == 2:
+            #     im = im[:, :, np.newaxis]
+            #     im = np.concatenate((im, im, im), axis=2)
+            # # flip the channel, since the original one using cv2
+            # # rgb -> bgr
+            # im = im[:, :, ::-1]
+            if roidb[i]['flipped']:
+                im = im[:, ::-1, :]
+            target_size = cfg.TRAIN.SCALES[scale_inds[i]]
+
+            # prep_im_for_blob processes images of the same size in the same
+            # way, so all images in the sequence should be processed
+            # identically.
+            im, im_scale = blob_utils.prep_im_for_blob(
+                im, cfg.PIXEL_MEANS, [target_size], cfg.TRAIN.MAX_SIZE)
+            im_scales.append(im_scale[0])
+            processed_ims_sequence.append(im[0])
+        if cfg.DATA_LOADER.NUM_STACKED_FRAMES == 1:
+            processed_ims.append(processed_ims_sequence[0])
+        else:
+            processed_ims.append(processed_ims_sequence)
 
     # Create a blob to hold the input images [n, c, h, w]
     blob = blob_utils.im_list_to_blob(processed_ims)

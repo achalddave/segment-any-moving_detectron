@@ -95,15 +95,50 @@ class JsonDataset(object):
         # else:
         #     cfg.MODEL.NUM_CLASSES = 2 if cfg.MODEL.KEYPOINTS_ON else self.num_classes
 
-    def load_image(self, entry):
+    def frame_offset(self, frame_path, frame_offset):
+        """Retrieve frame path for a frame at an offset from current frame.
+
+        If the frame at frame + offset doesn't exist, this returns the current
+        frame."""
+        if 'ytvos' in self.name or 'davis' in self.name:
+            frame_path = Path(frame_path)
+            frame_index = int(frame_path.stem)
+            new_frame_index = frame_index + frame_offset
+            new_frame_index_str = str(new_frame_index).zfill(
+                len(frame_path.stem))
+            new_path = frame_path.with_name(new_frame_index_str +
+                                            frame_path.suffix)
+            if new_path.exists():
+                return new_path
+            else:
+                return frame_path
+        else:
+            raise NotImplementedError(
+                'Frame arithmetic not supported for dataset: %s' % self.name)
+
+    def load_sequence(self, entry, length=6):
+        """Load a sequence of images ending at last_frame."""
+        images = []
+        current_frame = entry['image']
+        for i in range(length):
+            images.append(self.load_image_path(current_frame))
+            current_frame = self.frame_offset(current_frame, -1)
+        return images[::-1]
+
+    def load_image_path(self, path):
+        if isinstance(path, Path):
+            path = str(path)
         if DATASETS[self.name][IS_FLOW]:
-            # R channel contains angle, G channel contains magnitude. Note that
-            # this image is loaded in BGR format because of OpenCV.
-            return load_flow_png(entry['image'])
+            # R channel contains angle, G channel contains magnitude. Note
+            # that this image is loaded in BGR format because of OpenCV.
+            return load_flow_png(path)
         else:
             # For debugging and catching future possible mistakes.
             assert 'flow_vis' in self.name or 'flow' not in self.name
-            return cv2.imread(entry['image'])
+            return cv2.imread(path)
+
+    def load_image(self, entry):
+        return self.load_image_path(entry['image'])
 
     @property
     def cache_path(self):

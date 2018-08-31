@@ -171,6 +171,7 @@ __C.DATA_LOADER = AttrDict()
 # training; 4 seems to be the sweet spot in our experience)
 __C.DATA_LOADER.NUM_THREADS = 4
 
+__C.DATA_LOADER.NUM_STACKED_FRAMES = 1
 
 # ---------------------------------------------------------------------------- #
 # Inference ('test') options
