@@ -142,6 +142,7 @@ def collapse_categories(all_boxes, all_segms, all_keyps):
 
     Used for evaluating a multi-class, object-specific model on an
     object-agnostic / objectness dataset."""
+
     def flatten(lst):
         return [x for y in lst for x in y]
 
@@ -151,23 +152,23 @@ def collapse_categories(all_boxes, all_segms, all_keyps):
         # We collapse across the categories. This is similar for
         # segmentations and keypoints.
         num_images = len(all_boxes[1])
-        all_boxes = [all_boxes[0], []]
+        new_all_boxes = [all_boxes[0], []]
         for i in range(num_images):
-            all_boxes[1].append(
+            new_all_boxes[1].append(
                 np.vstack([x[i] for x in all_boxes[1:]]))
-        all_boxes = all_boxes
+        all_boxes = new_all_boxes
 
-        all_segms = [all_segms[0], []]
+        new_all_segms = [all_segms[0], []]
         for i in range(num_images):
-            all_segms[1].append(
+            new_all_segms[1].append(
                 flatten([x[i] for x in all_segms[1:]]))
-        all_segms = all_segms
+        all_segms = new_all_segms
 
-        all_keyps = [all_keyps[0], []]
+        new_all_keyps = [all_keyps[0], []]
         for i in range(num_images):
             all_keyps[1].append(
                 flatten([x[i] for x in all_keyps[1:]]))
-        all_keyps = all_keyps
+        all_keyps = new_all_keyps
 
     return all_boxes, all_segms, all_keyps
 
