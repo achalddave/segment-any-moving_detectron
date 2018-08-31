@@ -1,4 +1,5 @@
 import cv2
+import logging
 
 from pathlib import Path
 
@@ -6,7 +7,11 @@ from pathlib import Path
 def load_flow_png(png_path):
     # R channel contains angle, G channel contains magnitude. Note that
     # this image is loaded in BGR format because of OpenCV.
-    image = cv2.imread(png_path).astype(float)
+    try:
+        image = cv2.imread(png_path).astype(float)
+    except Exception:
+        logging.exception('Failed to load image at %s' % png_path)
+        raise
     image_path = Path(png_path)
     minmax_path = image_path.parent / (
         image_path.stem + '_magnitude_minmax.txt')
