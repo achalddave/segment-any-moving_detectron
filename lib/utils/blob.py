@@ -71,34 +71,28 @@ def im_list_to_blob(ims):
     Output is a 4D HCHW tensor of the images concatenated along axis 0 with
     shape.
 
-    If DATA_LOADER.NUM_STACKED_FRAMES > 1, each element of ims is a list of
-    images for the corresponding stack of frames.
+    If cfg.DATA_LOADER.NUM_STACKED_FRAMES > 1, each image contains
+    3*NUM_STACKED_FRAMES channels.
     """
     if not isinstance(ims, list):
         ims = [ims]
 
-    input_is_stacked_flow = cfg.DATA_LOADER.NUM_STACKED_FRAMES > 1
-
-    if input_is_stacked_flow:
-        max_shape = get_max_shape([sequence[0].shape[:2] for sequence in ims])
-    else:
-        max_shape = get_max_shape([im.shape[:2] for im in ims])
+    max_shape = get_max_shape([im.shape[:2] for im in ims])
 
     num_channels = 3 * cfg.DATA_LOADER.NUM_STACKED_FRAMES
-    num_images = len(ims)
-    blob = np.zeros(
-        (num_images, max_shape[0], max_shape[1], num_channels),
-        dtype=np.float32)
+    for im in ims:
+        if im.shape[2] != num_channels:
+            raise ValueError(
+                'Unexpected number of channels for %s stacked frames. '
+                '(Expected %s, saw %s)' % (cfg.DATA_LOADER.NUM_STACKED_FRAMES,
+                                           num_channels, im.shape[2]))
 
-    for i in range(num_images):
-        if input_is_stacked_flow:
-            image_sequence = ims[i]
-            assert isinstance(image_sequence, list)
-            h, w = image_sequence[0].shape[:2]
-            blob[i, 0:h, 0:w, :] = np.concatenate(image_sequence, axis=2)
-        else:
-            im = ims[i]
-            blob[i, 0:im.shape[0], 0:im.shape[1], :] = im
+    blob = np.zeros(
+        (len(ims), max_shape[0], max_shape[1], num_channels),
+        dtype=np.float32)
+    for i, im in enumerate(ims):
+        blob[i, 0:im.shape[0], 0:im.shape[1], :] = im
+
     # Move channels (axis 3) to axis 1
     # Axis order will become: (batch elem, channel, height, width)
     channel_swap = (0, 3, 1, 2)

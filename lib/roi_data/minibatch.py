@@ -82,7 +82,8 @@ def _get_image_blob(roidb):
         if cfg.DATA_LOADER.NUM_STACKED_FRAMES == 1:
             processed_ims.append(processed_ims_sequence[0])
         else:
-            processed_ims.append(processed_ims_sequence)
+            processed_ims.append(
+                np.concatenate(processed_ims_sequence, axis=2))
 
     # Create a blob to hold the input images [n, c, h, w]
     blob = blob_utils.im_list_to_blob(processed_ims)
