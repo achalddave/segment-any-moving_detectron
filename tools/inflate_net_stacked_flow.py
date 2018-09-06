@@ -31,6 +31,17 @@ from modeling.model_builder import Generalized_RCNN
 from utils.logging import setup_logging
 
 
+def expand_weight(weight, num_flow, method):
+    if method == 'copy':
+        return np.tile(weight, (1, num_flow, 1, 1)) / num_flow
+    elif method == 'zero':
+        new_weight = np.zeros((weight.shape[0], weight.shape[1] * num_flow,
+                               weight.shape[2], weight.shape[3]))
+        new_weight[:, :weight.shape[1], :, :] = weight
+        return new_weight
+    else:
+        raise ValueError('Unknown method: %s' % method)
+
 def main():
     # Use first line of file docstring as description if it exists.
     parser = argparse.ArgumentParser(
@@ -50,6 +61,13 @@ def main():
     parser.add_argument('--cfg-file', help='Required if --load-ckpt is True.')
     parser.add_argument('--output-inflated', required=True)
     parser.add_argument('--num-flow', type=int, default=6)
+    parser.add_argument(
+        '--method',
+        default='copy',
+        choices=['copy', 'zero'],
+        help=('Method for initializing weights of new channels. '
+              'copy: Copy the original weights and divide them by --num-flow. '
+              'zero: Set new weights to zero.'))
 
     args = parser.parse_args()
 
@@ -73,9 +91,9 @@ def main():
 
     if args.pretrained_model is not None:
         state_dict = torch.load(args.pretrained_model)
+        # Shape (num_outputs, num_inputs=3, kernel_width, kernel_height)
         weight = state_dict['conv1.weight']
-        new_weight = np.tile(weight, (1, args.num_flow, 1, 1))
-        new_weight /= args.num_flow
+        new_weight = expand_weight(weight, args.num_flow, args.method)
         state_dict['conv1.weight'] = torch.from_numpy(new_weight)
 
         torch.save(state_dict, args.output_inflated)
@@ -97,8 +115,7 @@ def main():
         weight = conv1.weight
 
         # Replicate the first two channels `num_flow` times
-        new_weight = np.tile(weight, (1, args.num_flow, 1, 1))
-        new_weight /= args.num_flow
+        new_weight = expand_weight(weight, args.num_flow, args.method)
 
         new_conv = nn.Conv2d(
             in_channels=new_weight.shape[1],
