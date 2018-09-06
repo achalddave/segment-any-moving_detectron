@@ -43,6 +43,7 @@ import utils.env as envu
 import utils.net as net_utils
 import utils.vis as vis_utils
 from utils import subprocess_utils
+from utils.blob import pack_sequence
 from utils.io import save_object
 from utils.timer import Timer
 
@@ -291,7 +292,9 @@ def test_net(
             box_proposals = None
 
         timers['im_load'].tic()
-        im = entry['dataset'].load_image(entry)
+        im = entry['dataset'].load_sequence(
+            entry, cfg.DATA_LOADER.NUM_STACKED_FRAMES)
+        im = pack_sequence(im)
         timers['im_load'].toc()
         cls_boxes_i, cls_segms_i, cls_keyps_i = im_detect_all(model, im, box_proposals, timers)
 

@@ -49,15 +49,13 @@ import utils.keypoints as keypoint_utils
 
 def im_detect_all(model, im, box_proposals=None, timers=None):
     """Process the outputs of model for testing
+
     Args:
-      model: the network module
-      im_data: Pytorch variable. Input batch to the model.
-      im_info: Pytorch variable. Input batch to the model.
-      gt_boxes: Pytorch variable. Input batch to the model.
-      num_boxes: Pytorch variable. Input batch to the model.
-      args: arguments from command line.
-      timer: record the cost of time for different steps
-    The rest of inputs are of type pytorch Variables and either input to or output from the model.
+        model: the network module
+        im (np.ndarray): Shape (height, width, num_channels). If working with
+          stacked optical flow, num_channels = 3 * NUM_STACKED_FRAMES.
+        box_proposals
+        timer: record the cost of time for different steps
     """
     if timers is None:
         timers = defaultdict(Timer)
@@ -174,7 +172,7 @@ def im_detect_bbox(model, im, target_scale, target_max_size, boxes=None):
             box_deltas = box_deltas.view(-1, 4) * cfg.TRAIN.BBOX_NORMALIZE_STDS \
                          + cfg.TRAIN.BBOX_NORMALIZE_MEANS
         pred_boxes = box_utils.bbox_transform(boxes, box_deltas, cfg.MODEL.BBOX_REG_WEIGHTS)
-        pred_boxes = box_utils.clip_tiled_boxes(pred_boxes, im.shape)
+        pred_boxes = box_utils.clip_tiled_boxes(pred_boxes, im.shape[:2])
         if cfg.MODEL.CLS_AGNOSTIC_BBOX_REG:
             pred_boxes = np.tile(pred_boxes, (1, scores.shape[1]))
     else:
@@ -332,7 +330,10 @@ def im_detect_bbox_aspect_ratio(
     Returns predictions in the original image space.
     """
     # Compute predictions on the transformed image
-    im_ar = image_utils.aspect_ratio_rel(im, aspect_ratio)
+    im_ar = blob_utils.pack_sequence([
+        image_utils.aspect_ratio_rel(x, aspect_ratio)
+        for x in blob_utils.unpack_sequence(im)
+    ])
 
     if not cfg.MODEL.FASTER_RCNN:
         box_proposals_ar = box_utils.aspect_ratio(box_proposals, aspect_ratio)
@@ -509,7 +510,10 @@ def im_detect_mask_aspect_ratio(model, im, aspect_ratio, boxes, hflip=False):
     """Computes mask detections at the given width-relative aspect ratio."""
 
     # Perform mask detection on the transformed image
-    im_ar = image_utils.aspect_ratio_rel(im, aspect_ratio)
+    im_ar = blob_utils.pack_sequence([
+        image_utils.aspect_ratio_rel(x, aspect_ratio)
+        for x in blob_utils.unpack_sequence(im)
+    ])
     boxes_ar = box_utils.aspect_ratio(boxes, aspect_ratio)
 
     if hflip:
@@ -685,7 +689,10 @@ def im_detect_keypoints_aspect_ratio(
     """Detects keypoints at the given width-relative aspect ratio."""
 
     # Perform keypoint detectionon the transformed image
-    im_ar = image_utils.aspect_ratio_rel(im, aspect_ratio)
+    im_ar = blob_utils.pack_sequence([
+        image_utils.aspect_ratio_rel(x, aspect_ratio)
+        for x in blob_utils.unpack_sequence(im)
+    ])
     boxes_ar = box_utils.aspect_ratio(boxes, aspect_ratio)
 
     if hflip:

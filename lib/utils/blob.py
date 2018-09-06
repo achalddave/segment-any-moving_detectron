@@ -122,7 +122,8 @@ def prep_im_for_blob(im, pixel_means, target_sizes, max_size):
     the scale factors that were used to compute each returned image.
     """
     im = im.astype(np.float32, copy=False)
-    im -= pixel_means
+    im_list = unpack_sequence(im)
+    im = pack_sequence([x - pixel_means for x in im_list])
     im_shape = im.shape
     im_size_min = np.min(im_shape[0:2])
     im_size_max = np.max(im_shape[0:2])
@@ -131,9 +132,16 @@ def prep_im_for_blob(im, pixel_means, target_sizes, max_size):
     im_scales = []
     for target_size in target_sizes:
         im_scale = get_target_scale(im_size_min, im_size_max, target_size, max_size)
-        im_resized = cv2.resize(im, None, None, fx=im_scale, fy=im_scale,
-                                interpolation=cv2.INTER_LINEAR)
-        ims.append(im_resized)
+        im_resized = [
+            cv2.resize(
+                x,
+                None,
+                None,
+                fx=im_scale,
+                fy=im_scale,
+                interpolation=cv2.INTER_LINEAR) for x in im_list
+        ]
+        ims.append(pack_sequence(im_resized))
         im_scales.append(im_scale)
     return ims, im_scales
 
@@ -186,3 +194,57 @@ def deserialize(arr):
     a workspace. See serialize().
     """
     return pickle.loads(arr.astype(np.uint8).tobytes())
+
+
+def unpack_sequence(sequence_concat):
+    """
+    Args:
+        sequence_concat (ndarray): Shape (height, width, 3 * num_images)
+
+    Returns:
+        list of ndarray with num_images elements, each of shape
+            (height, width, 3).
+
+    >>> x = np.random.rand(50, 50, 9)
+    >>> x_out = unpack_sequence(x)
+    >>> np.array_equal(x_out[0], x[:, :, :3])
+    True
+    >>> np.array_equal(x_out[1], x[:, :, 3:6])
+    True
+    >>> np.array_equal(x_out[2], x[:, :, 6:9])
+    True
+    >>> np.array_equal(pack_sequence(x_out), x)
+    True
+
+    >>> x = np.random.rand(50, 50, 3)
+    >>> x_out = unpack_sequence(x)
+    >>> len(x_out)
+    1
+    >>> np.array_equal(x, x_out[0])
+    True
+    """
+    assert sequence_concat.shape[2] % 3 == 0, (
+        'Unexpected number of channels: %s' % sequence_concat.shape[2])
+    num_images = sequence_concat.shape[2] / 3
+    return np.split(sequence_concat, num_images, axis=2)
+
+
+def pack_sequence(sequence_list):
+    """
+    Args:
+        sequence_list (list of ndarray): num_images elements, each of
+            shape (height, width, 3).
+
+    Returns:
+        ndarray: Shape (height, width, 3 * num_images)
+
+    >>> x = [np.random.rand(50, 50, 3) for _ in range(3)]
+    >>> x_out = pack_sequence(x)
+    >>> np.array_equal(x[0], x_out[:, :, :3])
+    True
+    >>> np.array_equal(x[1], x_out[:, :, 3:6])
+    True
+    >>> np.array_equal(x[2], x_out[:, :, 6:9])
+    True
+    """
+    return np.concatenate(sequence_list, axis=2)
