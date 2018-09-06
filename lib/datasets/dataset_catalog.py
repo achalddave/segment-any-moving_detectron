@@ -270,6 +270,24 @@ DATASETS = {
         NUM_CLASSES: 2,
         IS_FLOW: False
     },
+    'davis_hed_moving_train': {
+        IM_DIR: _DATA_DIR + '/davis/hed/',
+        ANN_FN: _DATA_DIR + '/davis/annotations/moving-train-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
+    },
+    'davis_hed_moving_trainval': {
+        IM_DIR: _DATA_DIR + '/davis/hed/',
+        ANN_FN: _DATA_DIR + '/davis/annotations/moving-trainval-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
+    },
+    'davis_hed_moving_test': {
+        IM_DIR: _DATA_DIR + '/davis/hed/',
+        ANN_FN: _DATA_DIR + '/davis/annotations/moving-test-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
+    },
     'davis_flow_relabeled_moving_train': {
         IM_DIR: _DATA_DIR + '/davis/liteflownet/',
         ANN_FN: _DATA_DIR + '/davis/annotations-always-moving/moving-train-no-last-frame.json',
@@ -373,6 +391,24 @@ DATASETS = {
         ANN_FN: _DATA_DIR + '/davis/annotations/moving-test-no-last-frame.json',
         NUM_CLASSES: 2,
         IS_FLOW: False
+    },
+    'davis_hed_flow_moving_train': {
+        IM_DIR: _DATA_DIR + '/davis/hed-flow-concat/',
+        ANN_FN: _DATA_DIR + '/davis/annotations/moving-train-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    'davis_hed_flow_moving_trainval': {
+        IM_DIR: _DATA_DIR + '/davis/hed-flow-concat/',
+        ANN_FN: _DATA_DIR + '/davis/annotations/moving-trainval-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    'davis_hed_flow_moving_test': {
+        IM_DIR: _DATA_DIR + '/davis/hed-flow-concat/',
+        ANN_FN: _DATA_DIR + '/davis/annotations/moving-test-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
     },
     'ytvos_rgb_all_moving_sub_train_8-21-18': {
         IM_DIR: _DATA_DIR + '/ytvos/rgb/train',
