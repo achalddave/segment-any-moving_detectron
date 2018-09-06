@@ -41,8 +41,8 @@ import nn as mynn
 from utils.detectron_weight_helper import load_detectron_weight
 import utils.env as envu
 import utils.net as net_utils
-import utils.subprocess as subprocess_utils
 import utils.vis as vis_utils
+from utils import subprocess_utils
 from utils.io import save_object
 from utils.timer import Timer
 
