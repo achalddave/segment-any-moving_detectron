@@ -116,7 +116,7 @@ class JsonDataset(object):
             raise NotImplementedError(
                 'Frame arithmetic not supported for dataset: %s' % self.name)
 
-    def load_sequence(self, entry, length=6):
+    def load_sequence(self, entry, length):
         """Load a sequence of images ending at last_frame."""
         images = []
         current_frame = entry['image']
