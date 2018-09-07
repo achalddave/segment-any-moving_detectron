@@ -37,10 +37,11 @@ def expand_weight(weight, num_flow, method):
     elif method == 'zero':
         new_weight = np.zeros((weight.shape[0], weight.shape[1] * num_flow,
                                weight.shape[2], weight.shape[3]))
-        new_weight[:, :weight.shape[1], :, :] = weight
+        new_weight[:, -weight.shape[1]:, :, :] = weight
         return new_weight
     else:
         raise ValueError('Unknown method: %s' % method)
+
 
 def main():
     # Use first line of file docstring as description if it exists.
