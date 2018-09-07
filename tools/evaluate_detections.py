@@ -7,8 +7,8 @@ from pprint import pformat
 import _init_paths  # pylint: disable=unused-import
 import utils.logging
 from core.config import cfg, merge_cfg_from_file, assert_and_infer_cfg
+from core.test_engine import collapse_categories
 from datasets import load_dataset, task_evaluation
-from test_engine import collapse_categories
 
 
 def main():
