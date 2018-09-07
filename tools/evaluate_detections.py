@@ -5,6 +5,7 @@ from pathlib import Path
 from pprint import pformat
 
 import _init_paths  # pylint: disable=unused-import
+
 import utils.logging
 from core.config import cfg, merge_cfg_from_file, assert_and_infer_cfg
 from core.test_engine import collapse_categories
@@ -45,41 +46,17 @@ def main():
     if args.cfg_file is not None:
         merge_cfg_from_file(args.cfg_file)
 
-    if args.dataset == "coco2017":
-        cfg.TEST.DATASETS = ('coco_2017_val',)
-        cfg.MODEL.NUM_CLASSES = 81
-    elif args.dataset == "keypoints_coco2017":
-        cfg.TEST.DATASETS = ('keypoints_coco_2017_val',)
-    elif args.dataset == 'coco_2017_objectness':
-        cfg.TEST.DATASETS = ('coco_2017_val_objectness',)
-        cfg.MODEL.NUM_CLASSES = 2
-    elif args.dataset == 'flyingthings':
-        cfg.TEST.DATASETS = ('flyingthings3d_test',)
-    elif args.dataset == 'flyingthings_train':
-        cfg.TEST.DATASETS = ('flyingthings3d_train',)
-    elif args.dataset == 'flyingthings_estimatedflow':
-        cfg.TEST.DATASETS = ('flyingthings3d_estimatedflow_test',)
-    elif args.dataset == 'flyingthings_estimatedflow_train':
-        cfg.TEST.DATASETS = ('flyingthings3d_estimatedflow_train',)
-    elif args.dataset == "fbms_flow":
-        cfg.TEST.DATASETS = ("fbms_flow_test",)
-    elif args.dataset == "fbms_flow_train":
-        cfg.TEST.DATASETS = ("fbms_flow_train",)
-    elif args.dataset == "davis_flow_moving":
-        cfg.TEST.DATASETS = ("davis_flow_moving_test",)
-    elif args.dataset is not None:
-        raise ValueError('Unknown --dataset: %s' % args.dataset)
-    else:  # For subprocess call
-        assert cfg.TEST.DATASETS, 'cfg.TEST.DATASETS shouldn\'t be empty'
-
-    if any(x in args.dataset for x in ('flyingthings', 'fbms', 'davis')):
+    dataset = load_dataset(args.dataset)
+    cfg.MODEL.NUM_CLASSES = dataset.num_classes
+    cfg.TEST.DATASETS = (args.dataset, )
+    if any(x in args.dataset
+            for x in ("flyingthings", "fbms", "davis", "ytvos")):
+        logging.info("Forcing JSON dataset eval true for dataset '%s'" %
+                     args.dataset)
         cfg.TEST.FORCE_JSON_DATASET_EVAL = True
 
     assert_and_infer_cfg()
 
-    dataset = cfg.TEST.DATASETS[0]
-
-    dataset = load_dataset(dataset)
     with open(args.detections, 'rb') as f:
         data = pickle.load(f)
     if args.collapse_categories:
