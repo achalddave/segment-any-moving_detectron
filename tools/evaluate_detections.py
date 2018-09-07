@@ -22,7 +22,11 @@ def main():
         '--cfg', dest='cfg_file', required=True, help='optional config file')
     parser.add_argument(
         '--output-dir',
-        help='Default: parent_dir({{detections}})/{{dataset}}-eval-out"')
+        default='{detections_parent}/eval-{dataset}',
+        help=('Output directory. Can contain the following variables: '
+              '{detections_parent}, which will be replaced by the parent dir '
+              'of --detections, and {dataset], which will be replaced by '
+              '--dataset'))
     parser.add_argument(
         '--collapse-categories',
         action='store_true',
@@ -31,11 +35,10 @@ def main():
 
     args = parser.parse_args()
 
-    if args.output_dir is None:
-        args.output_dir = Path(
-            args.detections).parent / ('%s-eval-out' % args.dataset)
-        args.output_dir.mkdir(exist_ok=True)
-    logging_path = str(args.output_dir / 'evaluate-detections.log')
+    output_dir = Path(args.output_dir.format(
+        detections_parent=Path(args.detections).parent, dataset=args.dataset))
+    output_dir.mkdir(exist_ok=True)
+    logging_path = str(output_dir / 'evaluate-detections.log')
     utils.logging.setup_logging(logging_path)
     logging.info('Args: %s', pformat(vars(args)))
 
@@ -89,7 +92,7 @@ def main():
                                     data['all_keyps']))
     results = task_evaluation.evaluate_all(dataset, data['all_boxes'],
                                            data['all_segms'],
-                                           data['all_keyps'], args.output_dir)
+                                           data['all_keyps'], output_dir)
     logging.info('Results:')
     logging.info(results)
     task_evaluation.log_copy_paste_friendly_results(results)
