@@ -123,23 +123,6 @@ def main():
     assert bool(args.image_dir) ^ bool(args.images)
 
     input_is_flow = False
-    # if args.dataset in ('coco_2017_train_objectness',
-    #                     'coco_2017_val_objectness'):
-    #     dataset = datasets.get_objectness_dataset()
-    #     cfg.MODEL.NUM_CLASSES = len(dataset.classes)
-    # elif any(x in args.dataset for x in ('flyingthings', 'fbms', 'davis')):
-    #     dataset = datasets.get_objectness_dataset()
-    #     input_is_flow = True
-    #     cfg.MODEL.NUM_CLASSES = len(dataset.classes)
-    #     cfg.PIXEL_MEANS = np.array([[[0, 0, 0]]])
-    # elif args.dataset.startswith("coco"):
-    #     dataset = datasets.get_coco_dataset()
-    #     cfg.MODEL.NUM_CLASSES = len(dataset.classes)
-    # elif args.dataset.startswith("keypoints_coco"):
-    #     dataset = datasets.get_coco_dataset()
-    #     cfg.MODEL.NUM_CLASSES = 2
-    # else:
-    #     raise ValueError('Unexpected dataset name: {}'.format(args.dataset))
 
     if args.dataset not in dataset_catalog.DATASETS:
         raise ValueError("Unexpected args.dataset: %s" % args.dataset)
