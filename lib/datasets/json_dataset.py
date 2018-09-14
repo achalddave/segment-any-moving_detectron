@@ -122,7 +122,8 @@ class JsonDataset(object):
         current_frame = entry['image']
         for i in range(length):
             images.append(self.load_image_path(current_frame))
-            current_frame = self.frame_offset(current_frame, -1)
+            if i < length - 1:
+                current_frame = self.frame_offset(current_frame, -1)
         return images[::-1]
 
     def load_image_path(self, path):
