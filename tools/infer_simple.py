@@ -204,10 +204,13 @@ def main():
             images = [x for x in image_dir.iterdir() if is_image(x)]
         if not images:
             raise ValueError('Found no images in %s' % args.image_dir)
-        output_images = [output_dir / x.relative_to(image_dir) for x in images]
+        output_images = [
+            (output_dir / x.relative_to(image_dir)).with_suffix('.png')
+            for x in images
+        ]
     else:
         images = [Path(x) for x in args.images]
-        output_images = [output_dir / x.stem for x in images]
+        output_images = [output_dir / (x.stem + '.png') for x in images]
     output_pickles = [x.with_suffix('.pickle') for x in output_images]
 
     for image_path, out_image, out_data in zip(
