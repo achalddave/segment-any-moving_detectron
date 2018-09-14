@@ -107,8 +107,8 @@ def _coco_segms_results_one_category(json_dataset, boxes, segms, cat_id):
         dets = dets.astype(np.float)
         scores = dets[:, -1]
 
-        results.extend(
-            [{'image_id': image_id,
+        results.extend([{
+            'image_id': image_id,
             'category_id': cat_id,
             'segmentation': rles[k],
             'score': scores[k]
