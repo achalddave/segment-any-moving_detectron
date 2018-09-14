@@ -122,8 +122,6 @@ def main():
     assert args.image_dir or args.images
     assert bool(args.image_dir) ^ bool(args.images)
 
-    input_is_flow = False
-
     if args.dataset not in dataset_catalog.DATASETS:
         raise ValueError("Unexpected args.dataset: %s" % args.dataset)
     dataset_info = dataset_catalog.DATASETS[args.dataset]
@@ -137,11 +135,13 @@ def main():
     elif cfg.MODEL.NUM_CLASSES == 81:
         dataset = datasets.get_coco_dataset()
 
-    if (dataset_info[dataset_catalog.IS_FLOW]
-            and not args.cfg_file.endswith('.pkl')):
-        logging.info(
-            "Changing pixel mean to zero for dataset '%s'" % args.dataset)
-        cfg.PIXEL_MEANS = np.zeros((1, 1, 3))
+    input_is_flow = dataset_info[dataset_catalog.IS_FLOW]
+    if input_is_flow:
+        logging.info('Input treated as flow images.')
+        if not args.cfg_file.endswith('.pkl'):
+            logging.info(
+                "Changing pixel mean to zero for dataset '%s'" % args.dataset)
+            cfg.PIXEL_MEANS = np.zeros((1, 1, 3))
 
     logging.info('load cfg from file: {}'.format(args.cfg_file))
     if args.cfg_file.endswith('.pkl'):
