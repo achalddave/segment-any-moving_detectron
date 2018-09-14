@@ -451,7 +451,6 @@ DATASETS = {
         ANN_FN: _DATA_DIR + '/ytvos/all-moving-8-21-18/sub-train-no-last-frame.json',
         NUM_CLASSES: 2,
         IS_FLOW: True,
-        IMAGE_EXTENSION: '.png'
     },
     'ytvos_rgb_all_moving_sub_val_8-21-18': {
         IM_DIR: _DATA_DIR + '/ytvos/rgb/train',
