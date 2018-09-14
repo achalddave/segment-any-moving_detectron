@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 
-CUDA_PATH=/usr/local/cuda/
+CUDA_PATH=/opt/cuda/9.1/
+export C_INCLUDE_PATH="${C_INCLUDE_PATH}:${CUDA_PATH}/include"
+export CXXFLAGS="-std=c++11"
+export CFLAGS="-std=c99"
 
 python setup.py build_ext --inplace
 rm -rf build
