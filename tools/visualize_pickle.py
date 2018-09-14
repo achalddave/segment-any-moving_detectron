@@ -20,6 +20,7 @@ import _init_paths  # noqa: F401
 import datasets.dummy_datasets as datasets
 import utils.misc as misc_utils
 import utils.vis as vis_utils
+from datasets import dataset_catalog
 
 
 def _set_logging(logging_filepath):
@@ -92,17 +93,17 @@ def main():
     _set_logging(str(output_root / 'visualization.log'))
     logging.info('Args: %s', pformat(vars(args)))
 
-    if (args.dataset in ('coco_2017_train_objectness',
-                         'coco_2017_val_objectness')
-            or any(x in args.dataset
-                   for x in ['flyingthings', 'fbms', 'davis'])):
+    if args.dataset not in dataset_catalog.DATASETS:
+        raise ValueError("Unexpected args.dataset: %s" % args.dataset)
+    dataset_info = dataset_catalog.DATASETS[args.dataset]
+    if dataset_catalog.NUM_CLASSES not in dataset_info:
+        raise ValueError(
+            "Num classes not listed in dataset: %s" % args.dataset)
+
+    if dataset_info[dataset_catalog.NUM_CLASSES] == 2:
         dataset = datasets.get_objectness_dataset()
-    elif args.dataset.startswith("coco"):
+    elif dataset_info[dataset_catalog.NUM_CLASSES] == 81:
         dataset = datasets.get_coco_dataset()
-    elif args.dataset.startswith("keypoints_coco"):
-        dataset = datasets.get_coco_dataset()
-    else:
-        raise ValueError('Unexpected dataset name: {}'.format(args.dataset))
 
     if args.recursive:
         detectron_outputs = list(pickle_root.rglob('*.pickle')) + list(
@@ -137,7 +138,7 @@ def main():
             dataset=dataset,
             box_alpha=0.3,
             show_class=True,
-            thresh=0.7,
+            thresh=0.5,
             kp_thresh=2,
             dpi=300,
             ext='png'
