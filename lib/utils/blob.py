@@ -122,8 +122,7 @@ def prep_im_for_blob(im, pixel_means, target_sizes, max_size):
     the scale factors that were used to compute each returned image.
     """
     im = im.astype(np.float32, copy=False)
-    im_list = unpack_sequence(im)
-    im = pack_sequence([x - pixel_means for x in im_list])
+    im = pack_sequence([x - pixel_means for x in unpack_sequence(im)])
     im_shape = im.shape
     im_size_min = np.min(im_shape[0:2])
     im_size_max = np.max(im_shape[0:2])
@@ -139,7 +138,7 @@ def prep_im_for_blob(im, pixel_means, target_sizes, max_size):
                 None,
                 fx=im_scale,
                 fy=im_scale,
-                interpolation=cv2.INTER_LINEAR) for x in im_list
+                interpolation=cv2.INTER_LINEAR) for x in unpack_sequence(im)
         ]
         ims.append(pack_sequence(im_resized))
         im_scales.append(im_scale)
