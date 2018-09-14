@@ -240,6 +240,18 @@ DATASETS = {
         NUM_CLASSES: 2,
         IS_FLOW: True
     },
+    'fbms_rgb_train': {
+        IM_DIR: _DATA_DIR + '/fbms/rgb-highres/',
+        ANN_FN: _DATA_DIR + '/fbms/annotations/train-without-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
+    },
+    'fbms_rgb_test': {
+        IM_DIR: _DATA_DIR + '/fbms/rgb-highres/',
+        ANN_FN: _DATA_DIR + '/fbms/annotations/test-without-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
+    },
     'fbms_flow_train': {
         IM_DIR: _DATA_DIR + '/fbms/liteflownet-highres/',
         ANN_FN: _DATA_DIR + '/fbms/annotations/train-without-last-frame.json',
