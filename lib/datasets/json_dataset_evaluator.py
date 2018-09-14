@@ -109,10 +109,10 @@ def _coco_segms_results_one_category(json_dataset, boxes, segms, cat_id):
 
         results.extend(
             [{'image_id': image_id,
-              'category_id': cat_id,
-              'segmentation': rles[k],
-              'score': scores[k]}
-              for k in range(dets.shape[0])])
+            'category_id': cat_id,
+            'segmentation': rles[k],
+            'score': scores[k]
+        } for k in range(dets.shape[0])])
 
     return results
 
