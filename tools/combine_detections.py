@@ -1,3 +1,5 @@
+"""Combine two sets of detections using various heuristics."""
+
 import argparse
 import logging
 import numpy as np
