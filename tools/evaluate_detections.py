@@ -60,6 +60,7 @@ def main():
 
     with open(args.detections, 'rb') as f:
         data = pickle.load(f)
+
     if args.collapse_categories:
         def flatten(lst):
             return [x for y in lst for x in y]
