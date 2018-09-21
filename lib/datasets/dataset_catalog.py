@@ -241,25 +241,61 @@ DATASETS = {
         IS_FLOW: True
     },
     'fbms_rgb_train': {
-        IM_DIR: _DATA_DIR + '/fbms/rgb-highres/',
+        IM_DIR: _DATA_DIR + '/fbms/highres/rgb/',
         ANN_FN: _DATA_DIR + '/fbms/annotations/train-without-last-frame.json',
         NUM_CLASSES: 2,
         IS_FLOW: False
     },
     'fbms_rgb_test': {
-        IM_DIR: _DATA_DIR + '/fbms/rgb-highres/',
+        IM_DIR: _DATA_DIR + '/fbms/highres/rgb/',
         ANN_FN: _DATA_DIR + '/fbms/annotations/test-without-last-frame.json',
         NUM_CLASSES: 2,
         IS_FLOW: False
     },
     'fbms_flow_train': {
-        IM_DIR: _DATA_DIR + '/fbms/liteflownet-highres/',
+        IM_DIR: _DATA_DIR + '/fbms/highres/liteflownet/',
         ANN_FN: _DATA_DIR + '/fbms/annotations/train-without-last-frame.json',
         NUM_CLASSES: 2,
         IS_FLOW: True
     },
     'fbms_flow_test': {
-        IM_DIR: _DATA_DIR + '/fbms/liteflownet-highres/',
+        IM_DIR: _DATA_DIR + '/fbms/highres/liteflownet/',
+        ANN_FN: _DATA_DIR + '/fbms/annotations/test-without-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    'fbms_flownet2_train': {
+        IM_DIR: _DATA_DIR + '/fbms/highres/flownet2/',
+        ANN_FN: _DATA_DIR + '/fbms/annotations/train-without-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    'fbms_flownet2_test': {
+        IM_DIR: _DATA_DIR + '/fbms/highres/flownet2/',
+        ANN_FN: _DATA_DIR + '/fbms/annotations/test-without-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    'fbms_hed_flow_train': {
+        IM_DIR: _DATA_DIR + '/fbms/highres/hed-flow-concat/',
+        ANN_FN: _DATA_DIR + '/fbms/annotations/train-without-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    'fbms_hed_flow_test': {
+        IM_DIR: _DATA_DIR + '/fbms/highres/hed-flow-concat/',
+        ANN_FN: _DATA_DIR + '/fbms/annotations/test-without-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    'fbms_hed_flownet2_train': {
+        IM_DIR: _DATA_DIR + '/fbms/highres/hed-flownet2-concat/',
+        ANN_FN: _DATA_DIR + '/fbms/annotations/train-without-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    'fbms_hed_flownet2_test': {
+        IM_DIR: _DATA_DIR + '/fbms/highres/hed-flownet2-concat/',
         ANN_FN: _DATA_DIR + '/fbms/annotations/test-without-last-frame.json',
         NUM_CLASSES: 2,
         IS_FLOW: True
