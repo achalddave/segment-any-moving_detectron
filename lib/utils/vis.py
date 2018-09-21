@@ -112,6 +112,9 @@ def vis_one_image(
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
+    # Empirically chosen
+    linewidth = max(np.sqrt(im.shape[0]**2+im.shape[1]**2) / 1000, 1)
+
     if isinstance(boxes, list):
         boxes, segms, keypoints, classes = convert_from_cls_format(
             boxes, segms, keypoints)
@@ -156,13 +159,13 @@ def vis_one_image(
                           bbox[2] - bbox[0],
                           bbox[3] - bbox[1],
                           fill=False, edgecolor='g',
-                          linewidth=0.5, alpha=box_alpha))
+                          linewidth=linewidth, alpha=box_alpha))
 
         if show_class:
             ax.text(
                 bbox[0], bbox[1] - 2,
                 get_class_string(classes[i], score, dataset),
-                fontsize=3,
+                fontsize=linewidth*2,
                 family='serif',
                 bbox=dict(
                     facecolor='g', alpha=0.4, pad=0, edgecolor='none'),
