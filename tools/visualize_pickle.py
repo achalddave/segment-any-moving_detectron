@@ -136,7 +136,7 @@ def main():
             data['segmentations'],
             data['keypoints'],
             dataset=dataset,
-            box_alpha=0.3,
+            box_alpha=1.0,
             show_class=True,
             thresh=0.5,
             kp_thresh=2,
