@@ -10,6 +10,7 @@ on the raw pixels).
 import argparse
 import logging
 import pickle
+from multiprocessing import Pool
 from pathlib import Path
 from pprint import pformat
 
@@ -61,6 +62,33 @@ def _set_logging(logging_filepath):
     logging.info('Writing log file to %s', logging_filepath)
 
 
+def visualize(image_path, pickle_path, output_path, dataset, thresh):
+    if output_path.exists():
+        return
+    assert image_path.exists(), '%s does not exist' % image_path
+    im = cv2.imread(str(image_path))
+    with open(pickle_path, 'rb') as f:
+        data = pickle.load(f)
+    vis_utils.vis_one_image(
+        im[:, :, ::-1],  # BGR -> RGB for visualization
+        output_path.stem,
+        output_path.parent,
+        data['boxes'],
+        data['segmentations'],
+        data['keypoints'],
+        dataset=dataset,
+        box_alpha=1.0,
+        show_class=True,
+        thresh=thresh,
+        kp_thresh=2,
+        dpi=300,
+        ext='png')
+
+
+def visualize_unpack(args):
+    return visualize(*args)
+
+
 def main():
     # Use first line of file docstring as description if it exists.
     parser = argparse.ArgumentParser(
@@ -77,6 +105,8 @@ def main():
     parser.add_argument(
         '--images-extension',
         default='.png')
+    parser.add_argument('--threshold', default=0.7, type=float)
+    parser.add_argument('--num-workers', type=int, default=4)
 
     args = parser.parse_args()
 
@@ -119,30 +149,26 @@ def main():
     ]
     outputs = [output_root / x.with_suffix('.png') for x in relative_paths]
 
-    for image_path, pickle_path, output_path in zip(
-            tqdm(images), detectron_outputs, outputs):
-        assert image_path.exists(), '%s does not exist' % image_path
-        im = cv2.imread(str(image_path))
-        with open(pickle_path, 'rb') as f:
-            data = pickle.load(f)
-        output_dir = output_path.parent
-        output_dir.mkdir(exist_ok=True, parents=True)
-        output_basename = output_path.stem
-        vis_utils.vis_one_image(
-            im[:, :, ::-1],  # BGR -> RGB for visualization
-            output_basename,
-            output_dir,
-            data['boxes'],
-            data['segmentations'],
-            data['keypoints'],
-            dataset=dataset,
-            box_alpha=1.0,
-            show_class=True,
-            thresh=0.5,
-            kp_thresh=2,
-            dpi=300,
-            ext='png'
-        )
+    tasks = []
+    for image_path, pickle_path, output_path in zip(images, detectron_outputs,
+                                                    outputs):
+        if output_path.exists():
+            continue
+        output_path.parent.mkdir(exist_ok=True, parents=True)
+        tasks.append((image_path, pickle_path, output_path, dataset,
+                      args.threshold))
+
+    if not tasks:
+        logging.info('Nothing to do! Exiting.')
+        return
+
+    if args.num_workers == 0:
+        list(map(visualize_unpack, tqdm(tasks)))
+    else:
+        args.num_workers = min(args.num_workers, len(tasks))
+        pool = Pool(args.num_workers)
+        results = pool.imap_unordered(visualize_unpack, tasks)
+        list(tqdm(results, total=len(tasks)))  # Show progress bar
 
 
 if __name__ == "__main__":
