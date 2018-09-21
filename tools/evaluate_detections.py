@@ -18,7 +18,8 @@ def main():
         description=__doc__.split('\n')[0] if __doc__ else '',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--dataset', required=True)
-    parser.add_argument('--detections', required=True)
+    parser.add_argument(
+        '--detections', required=True, help='detections.pkl file')
     parser.add_argument(
         '--cfg', dest='cfg_file', required=True, help='optional config file')
     parser.add_argument(
@@ -73,6 +74,21 @@ def main():
     logging.info('Results:')
     logging.info(results)
     task_evaluation.log_copy_paste_friendly_results(results)
+
+    results = results[args.dataset]
+    to_log = [
+        ('Det mAP', '%.2f' % (100 * results['box']['AP'])),
+        ('Seg mAP', '%.2f' % (100 * results['mask']['AP'])),
+        ('Det @ 0.5', '%.2f' % (100 * results['box']['AP50'])),
+        ('Seg @ 0.5', '%.2f' % (100 * results['mask']['AP50'])),
+        ('Step', ''),
+        ('Train Date', ''),
+        ('Path', str(Path(logging_path).resolve())),
+        ('Experiment ID', '')
+    ]
+
+    logging.info(','.join(x[0] for x in to_log))
+    logging.info(','.join(str(x[1]) for x in to_log))
 
 
 if __name__ == "__main__":

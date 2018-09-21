@@ -7,6 +7,7 @@ import os
 import pprint
 import subprocess
 import sys
+from pathlib import Path
 
 import torch
 import numpy as np
@@ -86,8 +87,8 @@ if __name__ == '__main__':
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
 
-    utils.logging.setup_logging(
-        os.path.join(args.output_dir, 'evaluation.log'))
+    logging_path = os.path.join(args.output_dir, 'evaluation.log')
+    utils.logging.setup_logging(logging_path)
     subprocess.call([
         './git-state/save_git_state.sh',
         os.path.join(args.output_dir, 'git-state')
@@ -118,7 +119,6 @@ if __name__ == '__main__':
                 except KeyError:
                     pass
 
-                from pathlib import Path
                 detectron_dir = Path(__file__).parent.parent
                 if Path(other_cfg['ROOT_DIR']) != detectron_dir:
                     other_cfg['ROOT_DIR'] = str(detectron_dir)
@@ -172,8 +172,39 @@ if __name__ == '__main__':
     # manually set args.cuda
     args.cuda = True
 
-    run_inference(
+    all_results = run_inference(
         args,
         ind_range=args.range,
         multi_gpu_testing=args.multi_gpu_testing,
         check_expected_results=True)
+
+    results = all_results[args.dataset]
+    step = ''
+    experiment_id = ''
+    if args.load_ckpt is not None:
+        ckpt_path = Path(args.load_ckpt)
+        if 'model_step' in ckpt_path.stem:
+            # Should be of format 'model_step<step>'
+            try:
+                step = str(int(ckpt_path.stem.split('model_step')[1]))
+            except ValueError as e:
+                pass
+
+        experiment_id_path = ckpt_path.parent.parent / 'experiment_id.txt'
+        if experiment_id_path.exists():
+            with open(experiment_id_path, 'r') as f:
+                experiment_id = f.read().strip()
+
+    to_log = [
+        ('Det mAP', '%.2f' % (100 * results['box']['AP'])),
+        ('Seg mAP', '%.2f' % (100 * results['mask']['AP'])),
+        ('Det @ 0.5', '%.2f' % (100 * results['box']['AP50'])),
+        ('Seg @ 0.5', '%.2f' % (100 * results['mask']['AP50'])),
+        ('Step', step),
+        ('Train Date', ''),
+        ('Path', str(Path(logging_path).resolve())),
+        ('Experiment ID', experiment_id)
+    ]
+
+    logging.info(','.join(x[0] for x in to_log))
+    logging.info(','.join(str(x[1]) for x in to_log))
