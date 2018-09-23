@@ -538,10 +538,10 @@ DATASETS = {
         IMAGE_EXTENSION: '.png'
     },
     'ytvos_flow_vis_sub_train_8-21-18': {
-        IM_DIR: _DATA_DIR + '/ytvos/liteflownet/train',
+        IM_DIR: _DATA_DIR + '/ytvos/liteflownet-vis/train',
         ANN_FN: _DATA_DIR + '/ytvos/train-splits/sub-train-no-last-frame.json',
         NUM_CLASSES: 2,
-        IS_FLOW: True,
+        IS_FLOW: False,
         IMAGE_EXTENSION: '.png'
     },
     'ytvos_flow_all_moving_sub_train_8-21-18': {
