@@ -55,6 +55,8 @@ def _get_image_blob(roidb):
     processed_ims = []
     im_scales = []
     for i in range(num_images):
+        # TODO(achald): [MultiRPN] Load multiple inputs. Support
+        # cfg.DATA_LOADER.NUM_INPUTS > 1
         sequence = roidb[i]['dataset'].load_sequence(
             roidb[i], cfg.DATA_LOADER.NUM_STACKED_FRAMES)
         processed_ims_sequence = []

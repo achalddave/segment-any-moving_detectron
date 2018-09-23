@@ -33,11 +33,14 @@ def ResNet101_conv5_body():
 def ResNet152_conv5_body():
     return ResNet_convX_body((3, 8, 36, 3))
 
+# MultiInput ResNet architectures
+
+def ResNet50_MultiInput_conv5_body():
+    return ResNet_MultiInput_convX_body((3, 4, 6, 3))
 
 # ---------------------------------------------------------------------------- #
 # Generic ResNet components
 # ---------------------------------------------------------------------------- #
-
 
 class ResNet_convX_body(nn.Module):
     def __init__(self, block_counts):
@@ -113,6 +116,18 @@ class ResNet_convX_body(nn.Module):
         for i in range(self.convX):
             x = getattr(self, 'res%d' % (i + 1))(x)
         return x
+
+
+# TODO(achald): [MultiRPN] Create a Resnet_MultiInput_convX_body that can take
+# in multiple inputs. Notes:
+#   * The module in `res[i]` should always take as input a list of tensors, and
+#     output a list of tensors. modeling.FPN relies on being able to take the
+#     output of res[i] and pass it through res[i+1], and we will also update
+#     modeling.FPN to rely on res[i] to be a list which will be merged into one
+#     feature map by modeling.FPN.topdown_lateral_module.
+class ResNet_MultiInput_convX_body(nn.Module):
+    def __init__(self, block_counts):
+        pass
 
 
 class ResNet_roi_conv5_head(nn.Module):

@@ -171,7 +171,14 @@ __C.DATA_LOADER = AttrDict()
 # training; 4 seems to be the sweet spot in our experience)
 __C.DATA_LOADER.NUM_THREADS = 4
 
+# Number of inputs; each input is provided its own backbone.
+__C.DATA_LOADER.NUM_INPUTS = 1
+
+# Number of frames to stack as input to the network.
+# TODO(achald): [MultiRPN] NUM_STACKED_FRAMES needs to be a list of NUM_INPUTS
+# elements, containing the number of stacked frames for each input.
 __C.DATA_LOADER.NUM_STACKED_FRAMES = 1
+
 
 # ---------------------------------------------------------------------------- #
 # Inference ('test') options
