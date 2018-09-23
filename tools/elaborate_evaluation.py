@@ -6,6 +6,7 @@ from io import StringIO
 from pathlib import Path
 
 import numpy as np
+from tabulate import tabulate
 
 import _init_paths  # noqa: F401
 from utils.coco import accumulate_with_more_info, get_iou_index
@@ -65,24 +66,28 @@ def main():
     # area range index 0: all area ranges
     # max dets index 2: 100 per image
     outputs = accumulate_with_more_info(coco_eval)
-    precision = outputs['precision'][:, :, :, 0, 2]
-    # has shape (num_iou_thresh, cls, area range, max dets)
-    recall = outputs['recall'][:, :, :, 0, 2]
-    scores = outputs['scores'][:, :, :, 0, 2]
+    category = 0
+    precision = outputs['precision'][:, :, category, 0, 2]
+    # has shape (num_iou_thresh, recall, cls, area range, max dets)
+    recall = outputs['recall'][:, :, category, 0, 2]
+    # scores = outputs['scores'][:, :, category, 0, 2]
 
-    iou_thresh = 0.5
-    iou_index = get_iou_index(coco_eval, iou_thresh)
+    for iou_thresh in [0.5, 0.9]:
+        iou_index = get_iou_index(coco_eval, iou_thresh)
+        max_recall = 100 * recall[iou_index].max()
+        logging.info(f'Max recall at IoU={iou_thresh}: {max_recall:.2f}')
+        recall_thresholds = [0.01, 0.1, 0.5, 0.75, 0.9]
+        pr_table = np.zeros((len(recall_thresholds), 2))
+        for i, recall_thresh in enumerate([0.01, 0.1, 0.5, 0.75, 0.9]):
+            # Scores are sorted in ascending order
+            recall_index = int(recall_thresh * 100)
 
-    # Scores are sorted in descending order
-    scores = scores[iou_index].squeeze()
-    score_thresh = 0.95
-    score_index = np.where(scores < score_thresh)[0][0] - 1
+            pr_table[i, 0] = 100 * precision[iou_index, recall_index].item()
+            pr_table[i, 1] = 100 * recall[iou_index, recall_index].item()
+        logging.info(
+            '\n%s', tabulate(
+                pr_table, floatfmt='.2f', headers=['prec', 'rec']))
 
-    logging.info(f'Precision at IOU={iou_thresh}, Score={score_thresh}')
-    logging.info(precision[iou_index, score_index])
-
-    logging.info(f'Recall at IOU={iou_thresh}, Score={score_thresh}')
-    logging.info(recall[iou_index, score_index])
 
 
 if __name__ == "__main__":
