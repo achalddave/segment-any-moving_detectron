@@ -210,7 +210,12 @@ def _do_detection_eval(json_dataset, res_file, output_dir):
     return coco_eval
 
 
-def _log_detection_eval_metrics(json_dataset, coco_eval):
+def _log_detection_eval_metrics(json_dataset_or_classes, coco_eval):
+    if isinstance(json_dataset_or_classes, list):
+        classes = json_dataset_or_classes
+    else:
+        classes = json_dataset_or_classes.classes
+
     def _get_thr_ind(coco_eval, thr):
         ind = np.where((coco_eval.params.iouThrs > thr - 1e-5) &
                        (coco_eval.params.iouThrs < thr + 1e-5))[0][0]
@@ -231,7 +236,7 @@ def _log_detection_eval_metrics(json_dataset, coco_eval):
         '~~~~ Mean and per-category AP @ IoU=[{:.2f},{:.2f}] ~~~~'.format(
             IoU_lo_thresh, IoU_hi_thresh))
     logger.info('{:.1f}'.format(100 * ap_default))
-    for cls_ind, cls in enumerate(json_dataset.classes):
+    for cls_ind, cls in enumerate(classes):
         if cls == '__background__':
             continue
         # minus 1 because of __background__
