@@ -163,7 +163,7 @@ def main():
     else:
         raise ValueError("Need Cuda device to run !")
 
-    tools_util.update_cfg_for_dataset(args.dataset)
+    tools_util.update_cfg_for_dataset(args.dataset, update_pixel_means=True)
     cfg.TRAIN.DATASETS = (args.dataset, )
 
     cfg_from_file(args.cfg_file)
