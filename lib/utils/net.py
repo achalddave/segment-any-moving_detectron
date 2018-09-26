@@ -160,6 +160,10 @@ def load_ckpt(model, ckpt):
     for name in ckpt:
         if mapping[name]:
             state_dict[name] = ckpt[name]
+        else:
+            raise ValueError(
+                'Received unknown key %s when trying to load checkpoint.' %
+                name)
     model.load_state_dict(state_dict, strict=False)
 
 
