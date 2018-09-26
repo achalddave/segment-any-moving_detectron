@@ -206,5 +206,5 @@ if __name__ == '__main__':
         ('Experiment ID', experiment_id)
     ]
 
-    logging.info(','.join(x[0] for x in to_log))
-    logging.info(','.join(str(x[1]) for x in to_log))
+    logging.info('copypaste1: %s', ','.join(x[0] for x in to_log))
+    logging.info('copypaste1: %s', ','.join(str(x[1]) for x in to_log))
