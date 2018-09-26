@@ -89,6 +89,5 @@ def main():
                 pr_table, floatfmt='.2f', headers=['prec', 'rec']))
 
 
-
 if __name__ == "__main__":
     main()
