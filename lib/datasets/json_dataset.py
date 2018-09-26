@@ -135,7 +135,8 @@ class JsonDataset(object):
             return load_flow_png(path)
         else:
             # For debugging and catching future possible mistakes.
-            assert 'flow_vis' in self.name or 'flow' not in self.name
+            assert ('flow_vis' in self.name or 'flownet2_vis' in self.name
+                    or 'flow' not in self.name)
             return cv2.imread(path)
 
     def load_image(self, entry):
