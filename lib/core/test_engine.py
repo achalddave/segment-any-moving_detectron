@@ -182,7 +182,7 @@ def test_net_on_dataset(
         multi_gpu=False,
         gpu_id=0):
     """Run inference on a dataset."""
-    dataset = load_dataset(dataset_name)
+    dataset = load_dataset(dataset_name, cfg.DATA_LOADER.INPUT_FRAME_OFFSETS)
     test_timer = Timer()
     test_timer.tic()
     if multi_gpu:
@@ -292,11 +292,12 @@ def test_net(
             box_proposals = None
 
         timers['im_load'].tic()
-        im = entry['dataset'].load_sequence(
-            entry, cfg.DATA_LOADER.NUM_STACKED_FRAMES)
+        # Shape (w, h, 3 * DATA_LOADER.NUM_INPUTS)
+        im = entry['dataset'].load_image(entry)
         im = pack_sequence(im)
         timers['im_load'].toc()
-        cls_boxes_i, cls_segms_i, cls_keyps_i = im_detect_all(model, im, box_proposals, timers)
+        cls_boxes_i, cls_segms_i, cls_keyps_i = im_detect_all(
+            model, im, box_proposals, timers)
 
         extend_results(i, all_boxes, cls_boxes_i)
         if cls_segms_i is not None:
@@ -331,8 +332,10 @@ def test_net(
         if cfg.VIS:
             im_name = os.path.splitext(entry['image'])[0].replace(os.path.sep, '_')
             # im_name = os.path.splitext(os.path.basename(entry['image']))[0]
+            # Use the first input (in case DATA_LOADER.NUM_INPUTS > 1)
+            im_vis = im[:, :, :3]
             vis_utils.vis_one_image(
-                im[:, :, ::-1],
+                im_vis[:, :, ::-1],
                 '{:d}_{:s}'.format(i, im_name),
                 os.path.join(output_dir, 'vis'),
                 cls_boxes_i,
@@ -396,7 +399,7 @@ def get_roidb_and_dataset(dataset_name, proposal_file, ind_range):
     """Get the roidb for the dataset specified in the global cfg. Optionally
     restrict it to a range of indices if ind_range is a pair of integers.
     """
-    dataset = load_dataset(dataset_name)
+    dataset = load_dataset(dataset_name, cfg.DATA_LOADER.INPUT_FRAME_OFFSETS)
     if cfg.TEST.PRECOMPUTED_PROPOSALS:
         assert proposal_file, 'No proposal file given'
         roidb = dataset.get_roidb(

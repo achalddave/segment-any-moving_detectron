@@ -36,8 +36,16 @@ __C.TRAIN = AttrDict()
 
 # Datasets to train on
 # Available dataset list: datasets.dataset_catalog.DATASETS.keys()
-# If multiple datasets are listed, the model is trained on their union
-__C.TRAIN.DATASETS = ()
+#
+# Each element of DATASETS is a tuple of datasets specifying which datasets can
+# be used for the BodyMuxer. If multiple tuples are specified in DATASETS, the
+# corresponding datasets for each input are merged.
+#
+# The annotation_file for each dataset within a tuple of datasets match. E.g.,
+# if DATASETS is the following tuple: ((a, b), (c, d)) with NUM_INPUTS=2, then
+# the annotation file of a and b must match, as must the annotation file of c
+# and d.
+__C.TRAIN.DATASETS = ((),)
 
 # Scales to use during training
 # Each scale is the pixel size of an image's shortest side
@@ -171,14 +179,12 @@ __C.DATA_LOADER = AttrDict()
 # training; 4 seems to be the sweet spot in our experience)
 __C.DATA_LOADER.NUM_THREADS = 4
 
-# Number of inputs; each input is provided its own backbone.
-__C.DATA_LOADER.NUM_INPUTS = 1
+# Number of input datasets.
+__C.DATA_LOADER.NUM_INPUTS = 2
 
-# Number of frames to stack as input to the network.
-# TODO(achald): [MultiRPN] NUM_STACKED_FRAMES needs to be a list of NUM_INPUTS
-# elements, containing the number of stacked frames for each input.
-__C.DATA_LOADER.NUM_STACKED_FRAMES = 1
-
+# Frame offset for each of the inputs. This can be used, for example, to load a
+# sequence of frames for each of the inputs.
+__C.DATA_LOADER.INPUT_FRAME_OFFSETS = [0]
 
 # ---------------------------------------------------------------------------- #
 # Inference ('test') options
@@ -187,8 +193,17 @@ __C.TEST = AttrDict()
 
 # Datasets to test on
 # Available dataset list: datasets.dataset_catalog.DATASETS.keys()
-# If multiple datasets are listed, testing is performed on each one sequentially
-__C.TEST.DATASETS = ()
+#
+# Each element of DATASETS is a tuple of datasets specifying the dataset to use
+# for each of the inputs (thus, of length DATA_LOADER.NUM_INPUTS).  If multiple
+# tuples are specified in DATASETS, testing is performed on each one
+# sequentially.
+#
+# The annotation_file for each dataset within a tuple of datasets match. E.g.,
+# if DATASETS is the following tuple: ((a, b), (c, d)) with NUM_INPUTS=2, then
+# the annotation file of a and b must match, as must the annotation file of c
+# and d.
+__C.TEST.DATASETS = ((),)
 
 # Scale to use during testing (can NOT list multiple scales)
 # The scale is the pixel size of an image's shortest side
@@ -407,6 +422,13 @@ __C.MODEL.TYPE = ''
 
 # The backbone conv body to use
 __C.MODEL.CONV_BODY = ''
+
+# Conv body to use for each of the inputs.
+__C.MODEL.CONV_MUXER_BODIES = ()
+
+# List of length len(MODEL.CONV_MUXER_BODIES). Each element is a list of
+# indices indicating which inputs to pass to each body.
+__C.MODEL.CONV_MUXER_INPUTS = ((), )
 
 # Number of classes in the dataset; must be set
 # E.g., 81 for COCO (80 foreground + 1 background)
@@ -944,11 +966,12 @@ __C.DEDUP_BOXES = 1. / 16.
 # Heuristic choice based on that would scale a 16 pixel anchor up to 1000 pixels
 __C.BBOX_XFORM_CLIP = np.log(1000. / 16.)
 
-# Pixel mean values (BGR order) as a (1, 1, 3) array
+# Pixel mean values (BGR order) as a (1, 1, 3) array. PIXEL_MEANS should be a
+# list of same length as the number of input datasets.
 # We use the same pixel mean for all networks even though it's not exactly what
-# they were trained with
+# they were trained with.
 # "Fun" fact: the history of where these values comes from is lost (From Detectron lol)
-__C.PIXEL_MEANS = np.array([[[102.9801, 115.9465, 122.7717]]])
+__C.PIXEL_MEANS = [np.array([[[102.9801, 115.9465, 122.7717]]])]
 
 # For reproducibility
 __C.RNG_SEED = 3

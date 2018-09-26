@@ -67,10 +67,6 @@ def fpn_ResNet152_conv5_P2only_body():
     )
 
 
-def fpn_ResNet50_MultiInput_conv5_body():
-    return fpn(ResNet.ResNet50_MultiInput_conv5_body,
-               fpn_level_info_ResNet50_MultiInput_conv5())
-
 # ---------------------------------------------------------------------------- #
 # Functions for bolting FPN onto a backbone architectures
 # ---------------------------------------------------------------------------- #
@@ -96,8 +92,6 @@ class fpn(nn.Module):
         # Step 1: recursively build down starting from the coarsest backbone level
         #
         # For the coarest backbone level: 1x1 conv only seeds recursion
-        # TODO(achald): [MultiRPN] Handle list inputs and list-type dimensions
-        # in fpn_dim_lateral.
         self.conv_top = nn.Conv2d(fpn_dim_lateral[0], fpn_dim, 1, 1, 0)
         if cfg.FPN.USE_GN:
             self.conv_top = nn.Sequential(
@@ -144,8 +138,6 @@ class fpn(nn.Module):
         # Coarser FPN levels introduced for RetinaNet
         if cfg.FPN.EXTRA_CONV_LEVELS and max_level > HIGHEST_BACKBONE_LVL:
             self.extra_pyramid_modules = nn.ModuleList()
-            # TODO(achald): [MultiRPN] Handle list of dimensions in
-            # fpn_level_info
             dim_in = fpn_level_info.dims[0]
             for i in range(HIGHEST_BACKBONE_LVL + 1, max_level + 1):
                 self.extra_pyramid_modules(
@@ -266,13 +258,6 @@ class fpn(nn.Module):
             return fpn_output_blobs
 
 
-# TODO(achald): [MultiRPN] Handle lists as input to topdown_lateral_module.
-# * __init__: When the input is a list, __init__ should take a list of
-#   dim_in_lateral for each element in the list, but only a single dim_in_top.
-#   There should be a single conv_lateral with input dimension
-#   sum(dim_in_lateral).
-# * forward: Forward will handle merging the elements of the list into one
-#   tensor, before passing it into the `conv_lateral` as usual.
 class topdown_lateral_module(nn.Module):
     """Add a top-down lateral module."""
     def __init__(self, dim_in_top, dim_in_lateral):
@@ -510,13 +495,3 @@ def fpn_level_info_ResNet152_conv5():
         dims=(2048, 1024, 512, 256),
         spatial_scales=(1. / 32., 1. / 16., 1. / 8., 1. / 4.)
     )
-
-
-def fpn_level_info_ResNet50_MultiInput_conv5():
-    n = cfg.DATA_LOADER.NUM_INPUT_TYPES
-    dims = (2048, 1024, 512, 256)
-    dims = tuple((x, ) * n for x in dims)
-    return FpnLevelInfo(
-        blobs=('res5_2_sum', 'res4_5_sum', 'res3_3_sum', 'res2_2_sum'),
-        dims=dims,
-        spatial_scales=(1. / 32., 1. / 16., 1. / 8., 1. / 4.))

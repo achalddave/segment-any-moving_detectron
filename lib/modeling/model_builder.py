@@ -18,6 +18,7 @@ import modeling.keypoint_rcnn_heads as keypoint_rcnn_heads
 import utils.blob as blob_utils
 import utils.net as net_utils
 import utils.resnet_weights_helper as resnet_utils
+from modeling import body_muxer
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +78,13 @@ class Generalized_RCNN(nn.Module):
         self.orphans_in_detectron = None
 
         # Backbone for feature extraction
-        self.Conv_Body = get_func(cfg.MODEL.CONV_BODY)()
+        conv_body_fn = get_func(cfg.MODEL.CONV_BODY)
+        if issubclass(conv_body_fn, body_muxer.BodyMuxer):
+            conv_bodies = [get_func(x) for x in cfg.MODEL.CONV_MUXER_BODIES]
+            self.Conv_Body = conv_body_fn(
+                conv_bodies, cfg.MODEL.CONV_MUXER_INPUTS)
+        else:
+            self.Conv_Body = conv_body_fn()
 
         # Region Proposal Network
         if cfg.RPN.RPN_ON:

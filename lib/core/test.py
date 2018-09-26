@@ -53,7 +53,7 @@ def im_detect_all(model, im, box_proposals=None, timers=None):
     Args:
         model: the network module
         im (np.ndarray): Shape (height, width, num_channels). If working with
-          stacked optical flow, num_channels = 3 * NUM_STACKED_FRAMES.
+          multiple inputs, num_channels = 3 * NUM_INPUTS.
         box_proposals
         timer: record the cost of time for different steps
     """

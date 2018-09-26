@@ -34,13 +34,16 @@ from . import load_dataset
 logger = logging.getLogger(__name__)
 
 
+# TODO(achald): [MultiRPN] Update to handle dataset_names being a tuple of
+# tuples. Each element of dataset_names is of length DATA_LOADER.NUM_INPUTS,
+# indicating the dataset to use for each of the inputs.
 def combined_roidb_for_training(dataset_names, proposal_files):
     """Load and concatenate roidbs for one or more datasets, along with optional
     object proposals. The roidb entries are then prepared for use in training,
     which involves caching certain types of metadata for each roidb entry.
     """
     def get_roidb(dataset_name, proposal_file):
-        ds = load_dataset(dataset_name)
+        ds = load_dataset(dataset_name, cfg.DATA_LOADER.INPUT_FRAME_OFFSETS)
         roidb = ds.get_roidb(
             gt=True,
             proposal_file=proposal_file,

@@ -302,20 +302,23 @@ DATASETS = {
     },
     'davis_rgb_moving_train': {
         IM_DIR: _DATA_DIR + '/davis/JPEGImages/',
-        ANN_FN: _DATA_DIR + '/davis/annotations/moving-train-no-last-frame_jpg-extension.json',
+        ANN_FN: _DATA_DIR + '/davis/annotations/moving-train-no-last-frame.json',
         NUM_CLASSES: 2,
+        IMAGE_EXTENSION: '.jpg',
         IS_FLOW: False
     },
     'davis_rgb_moving_trainval': {
         IM_DIR: _DATA_DIR + '/davis/JPEGImages/',
-        ANN_FN: _DATA_DIR + '/davis/annotations/moving-trainval-no-last-frame_jpg-extension.json',
+        ANN_FN: _DATA_DIR + '/davis/annotations/moving-trainval-no-last-frame.json',
         NUM_CLASSES: 2,
+        IMAGE_EXTENSION: '.jpg',
         IS_FLOW: False
     },
     'davis_rgb_moving_test': {
         IM_DIR: _DATA_DIR + '/davis/JPEGImages/',
-        ANN_FN: _DATA_DIR + '/davis/annotations/moving-test-no-last-frame_jpg-extension.json',
+        ANN_FN: _DATA_DIR + '/davis/annotations/moving-test-no-last-frame.json',
         NUM_CLASSES: 2,
+        IMAGE_EXTENSION: '.jpg',
         IS_FLOW: False
     },
     'davis_hed_moving_train': {
@@ -799,5 +802,7 @@ DATASETS = {
 }
 
 for dataset, info in DATASETS.items():
+    # We use "+" to indicate the concatenation of datasets internally.
+    assert '+' not in dataset, '+ is an invalid character for datasets'
     if IMAGE_EXTENSION not in info:
         info[IMAGE_EXTENSION] = None

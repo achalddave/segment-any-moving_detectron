@@ -49,7 +49,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Train a X-RCNN network')
 
     parser.add_argument(
-        '--dataset', dest='dataset', required=True,
+        '--datasets', dest='datasets', nargs='+', required=True,
         help='Dataset to use')
     parser.add_argument(
         '--cfg', dest='cfg_file', required=True,
@@ -163,10 +163,11 @@ def main():
     else:
         raise ValueError("Need Cuda device to run !")
 
-    tools_util.update_cfg_for_dataset(args.dataset, update_pixel_means=True)
-    cfg.TRAIN.DATASETS = (args.dataset, )
-
     cfg_from_file(args.cfg_file)
+
+    tools_util.update_cfg_for_dataset(args.datasets, update_pixel_means=True)
+    cfg.TRAIN.DATASETS = (args.datasets, )
+
     if args.set_cfgs is not None:
         cfg_from_list(args.set_cfgs)
 

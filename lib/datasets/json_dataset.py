@@ -54,16 +54,61 @@ from .dataset_catalog import IS_FLOW, IMAGE_EXTENSION
 logger = logging.getLogger(__name__)
 
 
-class JsonDataset(object):
+def check_dataset_valid(name):
+    assert name in DATASETS.keys(), \
+        'Unknown dataset name: {}'.format(name)
+    assert os.path.exists(DATASETS[name][IM_DIR]), \
+        'Image directory \'{}\' not found'.format(DATASETS[name][IM_DIR])
+    assert os.path.exists(DATASETS[name][ANN_FN]), \
+        'Annotation file \'{}\' not found'.format(DATASETS[name][ANN_FN])
+
+
+def construct_image_path(image_dir, image_prefix, file_name, new_extension):
+    # Make file_name an abs path
+    im_path = os.path.join(image_dir, image_prefix + file_name)
+    if new_extension is not None:
+        if new_extension[0] != '.':
+            new_extension = '.' + new_extension
+        im_path = str(Path(im_path).with_suffix(new_extension))
+    return im_path
+
+
+def load_image_path(path, dataset_name):
+    if isinstance(path, Path):
+        path = str(path)
+    if DATASETS[dataset_name][IS_FLOW]:
+        # R channel contains angle, G channel contains magnitude. Note
+        # that this image is loaded in BGR format because of OpenCV.
+        return load_flow_png(path)
+    else:
+        assert 'flow_vis' in dataset_name or 'flow' not in dataset_name
+        return cv2.imread(path)
+
+
+def frame_offset(frame_path, frame_offset, dataset_name):
+    if 'ytvos' in dataset_name or 'davis' in dataset_name:
+        frame_path = Path(frame_path)
+        frame_index = int(frame_path.stem)
+        new_frame_index = frame_index + frame_offset
+        new_frame_index_str = str(new_frame_index).zfill(
+            len(frame_path.stem))
+        new_path = frame_path.with_name(new_frame_index_str +
+                                        frame_path.suffix)
+        if new_path.exists():
+            return new_path
+        else:
+            return frame_path
+    else:
+        raise NotImplementedError(
+            'Frame arithmetic not supported for dataset: %s' % dataset_name)
+
+
+class SingleInputJsonDataset(object):
     """A class representing a COCO json dataset."""
 
     def __init__(self, name):
-        assert name in DATASETS.keys(), \
-            'Unknown dataset name: {}'.format(name)
-        assert os.path.exists(DATASETS[name][IM_DIR]), \
-            'Image directory \'{}\' not found'.format(DATASETS[name][IM_DIR])
-        assert os.path.exists(DATASETS[name][ANN_FN]), \
-            'Annotation file \'{}\' not found'.format(DATASETS[name][ANN_FN])
+        check_dataset_valid(name)
+
         logger.debug('Creating: {}'.format(name))
         self.name = name
         self.image_directory = DATASETS[name][IM_DIR]
@@ -72,6 +117,17 @@ class JsonDataset(object):
         )
         self.COCO = COCO(DATASETS[name][ANN_FN])
         self.debug_timer = Timer()
+        self._init_category_info()
+        self._init_keypoints()
+
+        # # Set cfg.MODEL.NUM_CLASSES
+        # if cfg.MODEL.NUM_CLASSES != -1:
+        #     assert cfg.MODEL.NUM_CLASSES == 2 if cfg.MODEL.KEYPOINTS_ON else self.num_classes, \
+        #         "number of classes should equal when using multiple datasets"
+        # else:
+        #     cfg.MODEL.NUM_CLASSES = 2 if cfg.MODEL.KEYPOINTS_ON else self.num_classes
+
+    def _init_category_info(self):
         # Set up dataset classes
         category_ids = self.COCO.getCatIds()
         categories = [c['name'] for c in self.COCO.loadCats(category_ids)]
@@ -86,14 +142,6 @@ class JsonDataset(object):
             v: k
             for k, v in self.json_category_id_to_contiguous_id.items()
         }
-        self._init_keypoints()
-
-        # # Set cfg.MODEL.NUM_CLASSES
-        # if cfg.MODEL.NUM_CLASSES != -1:
-        #     assert cfg.MODEL.NUM_CLASSES == 2 if cfg.MODEL.KEYPOINTS_ON else self.num_classes, \
-        #         "number of classes should equal when using multiple datasets"
-        # else:
-        #     cfg.MODEL.NUM_CLASSES = 2 if cfg.MODEL.KEYPOINTS_ON else self.num_classes
 
     def frame_offset(self, frame_path, frame_offset):
         """Retrieve frame path for a frame at an offset from current frame.
@@ -119,31 +167,8 @@ class JsonDataset(object):
             raise NotImplementedError(
                 'Frame arithmetic not supported for dataset: %s' % self.name)
 
-    def load_sequence(self, entry, length):
-        """Load a sequence of images ending at last_frame."""
-        images = []
-        current_frame = entry['image']
-        for i in range(length):
-            images.append(self.load_image_path(current_frame))
-            if i < length - 1:
-                current_frame = self.frame_offset(current_frame, -1)
-        return images[::-1]
-
-    def load_image_path(self, path):
-        if isinstance(path, Path):
-            path = str(path)
-        if DATASETS[self.name][IS_FLOW]:
-            # R channel contains angle, G channel contains magnitude. Note
-            # that this image is loaded in BGR format because of OpenCV.
-            return load_flow_png(path)
-        else:
-            # For debugging and catching future possible mistakes.
-            assert ('flow_vis' in self.name or 'flownet2_vis' in self.name
-                    or 'flow' not in self.name)
-            return cv2.imread(path)
-
     def load_image(self, entry):
-        return self.load_image_path(entry['image'])
+        return load_image_path(entry['image'], self.name)
 
     @property
     def cache_path(self):
@@ -151,6 +176,10 @@ class JsonDataset(object):
         if not os.path.exists(cache_path):
             os.makedirs(cache_path)
         return cache_path
+
+    @property
+    def gt_cache_path(self):
+        return os.path.join(self.cache_path, self.name + '_gt_roidb.pkl')
 
     @property
     def valid_cached_keys(self):
@@ -192,7 +221,7 @@ class JsonDataset(object):
             self._prep_roidb_entry(entry)
         if gt:
             # Include ground-truth object annotations
-            cache_filepath = os.path.join(self.cache_path, self.name+'_gt_roidb.pkl')
+            cache_filepath = self.gt_cache_path
             if os.path.exists(cache_filepath) and not cfg.DEBUG:
                 self.debug_timer.tic()
                 self._add_gt_from_cache(roidb, cache_filepath)
@@ -231,14 +260,9 @@ class JsonDataset(object):
         # Reference back to the parent dataset
         entry['dataset'] = self
         # Make file_name an abs path
-        im_path = os.path.join(
-            self.image_directory, self.image_prefix + entry['file_name']
-        )
-        if DATASETS[self.name][IMAGE_EXTENSION] is not None:
-            new_extension = DATASETS[self.name][IMAGE_EXTENSION]
-            if new_extension[0] != '.':
-                new_extension = '.' + new_extension
-            im_path = str(Path(im_path).with_suffix(new_extension))
+        im_path = construct_image_path(self.image_directory, self.image_prefix,
+                                       entry['file_name'],
+                                       DATASETS[self.name][IMAGE_EXTENSION])
 
         assert os.path.exists(im_path), 'Image \'{}\' not found'.format(im_path)
         entry['image'] = im_path
@@ -468,6 +492,122 @@ class JsonDataset(object):
             gt_kps[1, i] = y[i]
             gt_kps[2, i] = v[i]
         return gt_kps
+
+
+# NOTE [MultiRPN] (9/23/18, 7:48PM): I believe multiple dataset loading should
+# be implemented properly in JsonDataset. Need to update callers etc.
+# TODO(achald): [MultiRPN]
+#   * Update any references to `load_sequence`, which no longer exists.
+#   * Update any references to `name`, which is no longer a valid dataset but
+#     rather an identifier for this JsonDataset. That is, it can be used, e.g.,
+#     for caching, etc. but not for recovering the dataset name.
+class JsonDataset(SingleInputJsonDataset):
+    def __init__(self, names, offsets):
+        for name in names:
+            check_dataset_valid(name)
+
+        logger.debug('Creating: {}'.format(name))
+
+        self.names = names
+        # We maintain a unique name for, e.g., the cache file.
+        self.name = '+'.join(self.names)
+
+        self.offsets = offsets
+
+        self.datasets_info = [DATASETS[name] for name in names]
+        annotation_file = self.datasets_info[0][ANN_FN]
+        for i, dataset in enumerate(self.datasets_info[1:]):
+            if not dataset[ANN_FN] == annotation_file:
+                raise ValueError(
+                    'Annotation file for dataset %s (%s) does not match with '
+                    'dataset %s (%s)' % (names[i + 1], dataset[ANN_FN],
+                                         names[0], annotation_file))
+
+        self.COCO = COCO(annotation_file)
+        self._init_category_info()
+
+        self.image_directories = [
+            dataset[IM_DIR] for dataset in self.datasets_info
+        ]
+        self.image_prefixes = [
+            '' if IM_PREFIX not in dataset else dataset[IM_PREFIX]
+            for dataset in self.datasets_info
+        ]
+
+        self.debug_timer = Timer()
+        # Set up dataset classes
+        category_ids = self.COCO.getCatIds()
+        categories = [c['name'] for c in self.COCO.loadCats(category_ids)]
+        self.category_to_id_map = dict(zip(categories, category_ids))
+        self.classes = ['__background__'] + categories
+        self.num_classes = len(self.classes)
+        self.json_category_id_to_contiguous_id = {
+            v: i + 1
+            for i, v in enumerate(self.COCO.getCatIds())
+        }
+        self.contiguous_category_id_to_json_id = {
+            v: k
+            for k, v in self.json_category_id_to_contiguous_id.items()
+        }
+        self._init_keypoints()
+
+    # TODO(achald): Figure out if we can use the first dataset's name to store
+    # the gt roidb. The gt roidb should really only be used to look at
+    # annotations and not image paths. The gt annotations should match across
+    # the datasets since the annotation file is the same, but
+    # (1) if the roidb is ever used in other contexts where the image_path is
+    #     accessed, we need a different cache path for each combination of
+    #     datasets
+    # (2) for debugging, it may be nice to have an roidb on disk for every
+    #     combination of datasets
+    # @property
+    # def gt_cache_path(self):
+    #     return os.path.join(self.cache_path, self.names[0] + '_gt_roidb.pkl')
+
+    def load_image(self, entry):
+        assert len(entry['image']) == len(self.names)
+        return [
+            load_image_path(path, name)
+            for path, name in zip(entry['image'], self.names)
+        ]
+
+    def _prep_roidb_entry(self, entry):
+        # Reference back to the parent dataset
+        entry['dataset'] = self
+
+        image_paths = []
+        for i in range(len(self.names)):
+            im_path = construct_image_path(
+                self.image_directories[i], self.image_prefixes[i],
+                entry['file_name'], DATASETS[self.names[i]][IMAGE_EXTENSION])
+            im_path = frame_offset(im_path, self.offsets[i], self.names[i])
+            assert os.path.exists(im_path), 'Image \'{}\' not found'.format(
+                im_path)
+            image_paths.append(im_path)
+
+        # TODO(achald): [MultiRPN] Check where else this is referenced, fix it
+        # if necessary.
+        entry['image'] = image_paths
+        entry['flipped'] = False
+        entry['has_visible_keypoints'] = False
+        # Empty placeholders
+        entry['boxes'] = np.empty((0, 4), dtype=np.float32)
+        entry['segms'] = []
+        entry['gt_classes'] = np.empty((0), dtype=np.int32)
+        entry['seg_areas'] = np.empty((0), dtype=np.float32)
+        entry['gt_overlaps'] = scipy.sparse.csr_matrix(
+            np.empty((0, self.num_classes), dtype=np.float32))
+        entry['is_crowd'] = np.empty((0), dtype=np.bool)
+        # 'box_to_gt_ind_map': Shape is (#rois). Maps from each roi to the index
+        # in the list of rois that satisfy np.where(entry['gt_classes'] > 0)
+        entry['box_to_gt_ind_map'] = np.empty((0), dtype=np.int32)
+        if self.keypoints is not None:
+            entry['gt_keypoints'] = np.empty(
+                (0, 3, self.num_keypoints), dtype=np.int32)
+        # Remove unwanted fields that come from the json file (if they exist)
+        for k in ['date_captured', 'url', 'license', 'file_name']:
+            if k in entry:
+                del entry[k]
 
 
 def add_proposals(roidb, rois, scales, crowd_thresh):

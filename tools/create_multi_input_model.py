@@ -17,61 +17,7 @@ import core.config as config_utils
 import utils.net as net_utils
 from core.config import cfg
 from modeling.model_builder import Generalized_RCNN
-from modeling.body_muxer import BodyMuxer_Concatenate
 from utils.logging import setup_logging
-
-
-def inflate_rpn_weights(rpn_dict, model, body_index):
-    def inflate(tensor, channel_index):
-        new_shape = list(tensor.shape)
-        new_shape[channel_index] = model.Conv_Body.dim_out
-        new_tensor = torch.zeros(*new_shape)
-
-        # Get the channel corresponding to body_index. E.g. if we care
-        # about body_index 2, and the bodies have output dimension
-        # [2, 5, 9]
-        # then start = 7, end = 16.
-        start = sum(
-            x.dim_out for x in model.Conv_Body.bodies[:body_index])
-        end = model.Conv_Body.bodies[body_index].dim_out
-
-        # Create a slice that slices from start:end in the specified
-        # channel_index.
-        assignment_slice = [slice(None)] * new_tensor.dim()
-        assignment_slice[channel_index] = slice(start, end)
-        new_tensor[assignment_slice] = tensor
-
-        return new_tensor
-
-    # We can't directly load the weights for the following tensors, as the
-    # inputs to their corresponding modules will now be bigger than before.
-    # - RPN.[FPN_]RPN_conv.weight
-    # - RPN.[FPN_]RPN_conv.bias,
-    # - RPN.[FPN_]RPN_cls_score.weight
-    # - RPN.[FPN_]RPN_bbox_pred.weight
-    # layers, as  For now, we load the weights into the subtensor
-    # corresponding to the --head-weights-index, leaving the rest as
-    # zero.
-    if 'FPN_RPN_conv.weight' in rpn_dict:
-        fpn = 'FPN_'
-    elif 'RPN_conv.weight' in rpn_dict:
-        fpn = ''
-    else:
-        raise ValueError('Unknown format of rpn_dict')
-    # Shape (output_channels, input_channels, w, h)
-    rpn_dict[fpn + 'RPN_conv.weight'] = inflate(
-        rpn_dict[fpn + 'RPN_conv.weight'], channel_index=1)
-    # Shape (input_channels, )
-    rpn_dict[fpn + 'RPN_conv.bias'] = inflate(
-        rpn_dict[fpn + 'RPN_conv.bias'], channel_index=0)
-    # Shape (output_channels, input_channels, w, h)
-    rpn_dict[fpn + 'RPN_cls_score.weight'] = inflate(
-        rpn_dict[fpn + 'RPN_cls_score.weight'], channel_index=1)
-
-    # Shape (output_channels, input_channels, w, h)
-    rpn_dict[fpn + 'RPN_bbox_pred.weight'] = inflate(
-        rpn_dict[fpn + 'RPN_bbox_pred.weight'], channel_index=1)
-    return rpn_dict
 
 
 def main():
@@ -125,22 +71,13 @@ def main():
                 assert child_key not in children_state_dicts[child]
                 children_state_dicts[child][child_key] = value
 
-            if isinstance(model.Conv_Body, BodyMuxer_Concatenate):
-                # XXX HACK XXX
-                # If the merging method is BodyMuxer_Concatenate, we can't
-                # directly load the weights for some tensors, as the inputs to
-                # their corresponding modules will now be bigger than before.
-                logging.info('Inflating RPN weights for BodyMuxer_Concatenate')
-                inflate_rpn_weights(children_state_dicts['RPN'], model,
-                                    args.head_weights_index)
-                # TODO(achald): This still isn't enough, since later stage in
-                # the pipeline use the RPN's dim_out to determine their
-                # convolutions, so we may have to inflate _everything_ above
-                # us.
-
             for child, child_state_dict in children_state_dicts.items():
                 model._modules[child].load_state_dict(child_state_dict)
-    __import__('ipdb').set_trace()
+
+    # The actual model state dict needs to be stored in a dictionary with
+    # 'model' as the key for train_net_step.py, test_net.py, etc.
+    output_checkpoint = {'model': model.state_dict()}
+    torch.save(output_checkpoint, args.output_model)
 
 
 if __name__ == "__main__":

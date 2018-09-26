@@ -61,8 +61,8 @@ def get_image_blob(im, target_scale, target_max_size):
     return blob, im_scale, im_info.astype(np.float32)
 
 
-def im_list_to_blob(ims):
-    """Convert a list of images into a network input. Assumes images were
+def im_list_to_blob(images):
+    """Convert a list of inputs into a network input. Assumes images were
     prepared using prep_im_for_blob or equivalent: i.e.
       - BGR channel order
       - pixel means subtracted
@@ -71,26 +71,30 @@ def im_list_to_blob(ims):
     Output is a 4D HCHW tensor of the images concatenated along axis 0 with
     shape.
 
-    If cfg.DATA_LOADER.NUM_STACKED_FRAMES > 1, each image contains
-    3*NUM_STACKED_FRAMES channels.
+    Args:
+        images (list): List of length batch_size. Each element is an image with
+            3 * DATA_LOADER.NUM_INPUTS channels.
+
+    Returns:
+        blob (np.ndarray): Shape (batch_size, 3 * DATA_LOADER.NUM_INPUTS,
+            height', width').
     """
-    if not isinstance(ims, list):
-        ims = [ims]
+    assert isinstance(images, list)
 
-    max_shape = get_max_shape([im.shape[:2] for im in ims])
+    max_shape = get_max_shape([im.shape[:2] for im in images])
 
-    num_channels = 3 * cfg.DATA_LOADER.NUM_STACKED_FRAMES
-    for im in ims:
+    num_channels = 3 * cfg.DATA_LOADER.NUM_INPUTS
+    for im in images:
         if im.shape[2] != num_channels:
             raise ValueError(
-                'Unexpected number of channels for %s stacked frames. '
-                '(Expected %s, saw %s)' % (cfg.DATA_LOADER.NUM_STACKED_FRAMES,
+                'Unexpected number of channels for %s inputs. '
+                '(Expected %s, saw %s)' % (cfg.DATA_LOADER.NUM_INPUTS,
                                            num_channels, im.shape[2]))
 
     blob = np.zeros(
-        (len(ims), max_shape[0], max_shape[1], num_channels),
+        (len(images), max_shape[0], max_shape[1], num_channels),
         dtype=np.float32)
-    for i, im in enumerate(ims):
+    for i, im in enumerate(images):
         blob[i, 0:im.shape[0], 0:im.shape[1], :] = im
 
     # Move channels (axis 3) to axis 1
@@ -120,9 +124,12 @@ def prep_im_for_blob(im, pixel_means, target_sizes, max_size):
       - Rescale to each of the specified target size (capped at max_size)
     Returns a list of transformed images, one for each target size. Also returns
     the scale factors that were used to compute each returned image.
+
+    Args:
+        im (np.ndarray): Shape (w, h, 3 * DATA_LOADER.NUM_INPUTS)
     """
     im = im.astype(np.float32, copy=False)
-    im = pack_sequence([x - pixel_means for x in unpack_sequence(im)])
+    im -= pixel_means
     im_shape = im.shape
     im_size_min = np.min(im_shape[0:2])
     im_size_max = np.max(im_shape[0:2])
