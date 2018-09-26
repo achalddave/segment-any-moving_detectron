@@ -15,6 +15,7 @@ import _init_paths  # noqa: F401
 import datasets.dummy_datasets as datasets
 import utils.misc as misc_utils
 import utils.vis as vis_utils
+from datasets import dataset_catalog
 from utils.logging import setup_logging
 
 
@@ -58,17 +59,16 @@ def main():
     setup_logging(str(output_root / 'visualization.log'))
     logging.info('Args: %s', pformat(vars(args)))
 
-    if (args.dataset in ('coco_2017_train_objectness',
-                         'coco_2017_val_objectness')
-            or any(x in args.dataset
-                   for x in ['flyingthings', 'fbms', 'davis', 'ytvos'])):
+    num_classes = dataset_catalog.DATASETS[args.dataset][
+        dataset_catalog.NUM_CLASSES]
+    if num_classes == 2:
         dataset = datasets.get_objectness_dataset()
-    elif args.dataset.startswith("coco"):
-        dataset = datasets.get_coco_dataset()
-    elif args.dataset.startswith("keypoints_coco"):
+    elif num_classes == 81:
         dataset = datasets.get_coco_dataset()
     else:
-        raise ValueError('Unexpected dataset name: {}'.format(args.dataset))
+        raise ValueError(
+            'Unexpected number of classes ({}) for dataset: {}'.format(
+                num_classes, args.dataset))
 
     bbox_annotations = collections.defaultdict(list)
     with open(args.bbox_json, 'r') as f:

@@ -27,6 +27,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 
 import _init_paths
+import tools_util
 import nn as mynn
 from core.config import (cfg, cfg_from_file, merge_cfg_from_cfg, cfg_from_list,
                          assert_and_infer_cfg)
@@ -122,26 +123,21 @@ def main():
     assert args.image_dir or args.images
     assert bool(args.image_dir) ^ bool(args.images)
 
-    if args.dataset not in dataset_catalog.DATASETS:
-        raise ValueError("Unexpected args.dataset: %s" % args.dataset)
-    dataset_info = dataset_catalog.DATASETS[args.dataset]
-    if dataset_catalog.NUM_CLASSES not in dataset_info:
-        raise ValueError(
-            "Num classes not listed in dataset: %s" % args.dataset)
-    cfg.MODEL.NUM_CLASSES = dataset_info[dataset_catalog.NUM_CLASSES]
+    # If the config is a pickle file, the pixel means should already have been
+    # edited at train time if necessary. Assume that the training code knew
+    # better, and don't edit them here..
+    config_is_pickle = args.cfg_file.endswith('.pkl')
+    tools_util.update_cfg_for_dataset(
+        args.dataset, update_pixel_means=not config_is_pickle)
 
     if cfg.MODEL.NUM_CLASSES == 2:
         dataset = datasets.get_objectness_dataset()
     elif cfg.MODEL.NUM_CLASSES == 81:
         dataset = datasets.get_coco_dataset()
-
-    input_is_flow = dataset_info[dataset_catalog.IS_FLOW]
+    input_is_flow = dataset_catalog.DATASETS[args.dataset][
+        dataset_catalog.IS_FLOW]
     if input_is_flow:
         logging.info('Input treated as flow images.')
-        if not args.cfg_file.endswith('.pkl'):
-            logging.info(
-                "Changing pixel mean to zero for dataset '%s'" % args.dataset)
-            cfg.PIXEL_MEANS = np.zeros((1, 1, 3))
 
     logging.info('load cfg from file: {}'.format(args.cfg_file))
     if args.cfg_file.endswith('.pkl'):

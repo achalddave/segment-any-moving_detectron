@@ -13,6 +13,7 @@ import torch
 import numpy as np
 
 import _init_paths  # pylint: disable=unused-import
+import tools_util
 from core.config import (cfg, merge_cfg_from_file, merge_cfg_from_cfg,
                          merge_cfg_from_list, assert_and_infer_cfg)
 from core.test_engine import run_inference
@@ -138,24 +139,12 @@ if __name__ == '__main__':
     if args.dataset is None:
         assert cfg.TEST.DATASETS, 'cfg.TEST.DATASETS shouldn\'t be empty'
     else:
-        if args.dataset not in dataset_catalog.DATASETS:
-            raise ValueError("Unexpected args.dataset: %s" % args.dataset)
-        dataset_info = dataset_catalog.DATASETS[args.dataset]
-        if dataset_catalog.NUM_CLASSES not in dataset_info:
-            raise ValueError(
-                "Num classes not listed in dataset: %s" % args.dataset)
-        cfg.MODEL.NUM_CLASSES = dataset_info[dataset_catalog.NUM_CLASSES]
-
-        if any(x in args.dataset
-               for x in ("flyingthings", "fbms", "davis", "ytvos")):
-            logging.info("Forcing JSON dataset eval true for dataset '%s'" %
-                         args.dataset)
-            cfg.TEST.FORCE_JSON_DATASET_EVAL = True
-        if (dataset_info[dataset_catalog.IS_FLOW]
-                and not args.cfg_file.endswith('.pkl')):
-            logging.info("Changing pixel mean to zero for dataset '%s'" %
-                         args.dataset)
-            cfg.PIXEL_MEANS = np.zeros((1, 1, 3))
+        # If the config is a pickle file, the pixel means should already have
+        # been edited at train time if necessary. Assume that the training code
+        # knew better, and don't edit them here..
+        config_is_pickle = args.cfg_file.endswith('.pkl')
+        tools_util.update_cfg_for_dataset(
+            args.dataset, update_pixel_means=not config_is_pickle)
         cfg.TEST.DATASETS = (args.dataset, )
 
     if args.objectness_eval:

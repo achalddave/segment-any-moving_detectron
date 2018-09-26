@@ -23,6 +23,7 @@ cv2.setNumThreads(0)  # pytorch issue 1355: possible deadlock in dataloader
 
 import _init_paths  # noqa: F401
 import nn as mynn
+import tools_util
 import utils.net as net_utils
 import utils.misc as misc_utils
 from core.config import cfg, cfg_from_file, cfg_from_list, assert_and_infer_cfg
@@ -162,18 +163,7 @@ def main():
     else:
         raise ValueError("Need Cuda device to run !")
 
-    if args.dataset not in dataset_catalog.DATASETS:
-        raise ValueError("Unexpected args.dataset: %s" % args.dataset)
-    dataset_info = dataset_catalog.DATASETS[args.dataset]
-    if dataset_catalog.NUM_CLASSES not in dataset_info:
-        raise ValueError(
-            "Num classes not listed in dataset: %s" % args.dataset)
-    cfg.MODEL.NUM_CLASSES = dataset_info[dataset_catalog.NUM_CLASSES]
-
-    if dataset_info[dataset_catalog.IS_FLOW]:
-        logging.info(
-            "Changing pixel mean to zero for dataset '%s'" % args.dataset)
-        cfg.PIXEL_MEANS = np.zeros((1, 1, 3))
+    tools_util.update_cfg_for_dataset(args.dataset)
     cfg.TRAIN.DATASETS = (args.dataset, )
 
     cfg_from_file(args.cfg_file)

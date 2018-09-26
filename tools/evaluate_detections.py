@@ -7,6 +7,7 @@ from pprint import pformat
 import _init_paths  # pylint: disable=unused-import
 
 import utils.logging
+import tools_util
 from core.config import cfg, merge_cfg_from_file, assert_and_infer_cfg
 from core.test_engine import collapse_categories
 from datasets import load_dataset, task_evaluation
@@ -48,13 +49,8 @@ def main():
         merge_cfg_from_file(args.cfg_file)
 
     dataset = load_dataset(args.dataset)
-    cfg.MODEL.NUM_CLASSES = dataset.num_classes
+    tools_util.update_cfg_for_dataset(args.dataset)
     cfg.TEST.DATASETS = (args.dataset, )
-    if any(x in args.dataset
-            for x in ("flyingthings", "fbms", "davis", "ytvos")):
-        logging.info("Forcing JSON dataset eval true for dataset '%s'" %
-                     args.dataset)
-        cfg.TEST.FORCE_JSON_DATASET_EVAL = True
 
     assert_and_infer_cfg()
 
