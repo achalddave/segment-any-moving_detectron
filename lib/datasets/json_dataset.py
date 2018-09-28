@@ -100,6 +100,9 @@ class JsonDataset(object):
 
         If the frame at frame + offset doesn't exist, this returns the current
         frame."""
+        if frame_offset == 0:
+            return frame_path
+
         if 'ytvos' in self.name or 'davis' in self.name:
             frame_path = Path(frame_path)
             frame_index = int(frame_path.stem)
