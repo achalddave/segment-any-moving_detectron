@@ -29,7 +29,8 @@ def parse_args():
     """Parse in command line arguments"""
     parser = argparse.ArgumentParser(description='Test a Fast R-CNN network')
     parser.add_argument(
-        '--dataset',
+        '--datasets',
+        nargs='*',
         help='training dataset')
     parser.add_argument(
         '--cfg', dest='cfg_file', required=True,
@@ -137,7 +138,7 @@ if __name__ == '__main__':
         merge_cfg_from_list(args.set_cfgs)
 
     print('Pixel means: %s' % cfg.PIXEL_MEANS)
-    if args.dataset is None:
+    if not args.datasets:
         assert cfg.TEST.DATASETS, 'cfg.TEST.DATASETS shouldn\'t be empty'
     else:
         # If the config is a pickle file, the pixel means should already have
@@ -145,8 +146,8 @@ if __name__ == '__main__':
         # knew better, and don't edit them here..
         config_is_pickle = args.cfg_file.endswith('.pkl')
         tools_util.update_cfg_for_dataset(
-            args.dataset, update_pixel_means=not config_is_pickle)
-        cfg.TEST.DATASETS = (args.dataset, )
+            args.datasets, update_pixel_means=not config_is_pickle)
+        cfg.TEST.DATASETS = (args.datasets, )
 
     if args.objectness_eval:
         assert cfg.MODEL.NUM_CLASSES == 2
@@ -168,7 +169,7 @@ if __name__ == '__main__':
         multi_gpu_testing=args.multi_gpu_testing,
         check_expected_results=True)
 
-    results = all_results[args.dataset]
+    results = all_results['+'.join(args.datasets)]
     step = ''
     experiment_id = ''
     if args.load_ckpt is not None:
