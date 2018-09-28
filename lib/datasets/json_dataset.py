@@ -86,12 +86,18 @@ def load_image_path(path, dataset_name):
 
 
 def frame_offset(frame_path, frame_offset, dataset_name):
+    """Retrieve frame path for a frame at an offset from current frame.
+
+    If the frame at frame + offset doesn't exist, this returns the current
+    frame."""
+    if frame_offset == 0:
+        return frame_path
+
     if 'ytvos' in dataset_name or 'davis' in dataset_name:
         frame_path = Path(frame_path)
         frame_index = int(frame_path.stem)
         new_frame_index = frame_index + frame_offset
-        new_frame_index_str = str(new_frame_index).zfill(
-            len(frame_path.stem))
+        new_frame_index_str = str(new_frame_index).zfill(len(frame_path.stem))
         new_path = frame_path.with_name(new_frame_index_str +
                                         frame_path.suffix)
         if new_path.exists():
