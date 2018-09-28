@@ -95,13 +95,14 @@ if __name__ == '__main__':
         os.path.join(args.output_dir, 'git-state')
     ])
 
+    file_logger = logging.getLogger(logging_path)
     logger = logging.getLogger(__name__)
     if output_dir_automatically_set:
         logger.info('Automatically set output directory to %s',
                     args.output_dir)
 
-    logger.info('Called with args:')
-    logger.info(args)
+    file_logger.info('Called with args:')
+    file_logger.info(args)
 
     cfg.VIS = args.vis
 
@@ -153,8 +154,8 @@ if __name__ == '__main__':
 
     assert_and_infer_cfg()
 
-    logger.info('Testing with config:')
-    logger.info(pprint.pformat(cfg))
+    file_logger.info('Testing with config:')
+    file_logger.info(pprint.pformat(cfg))
 
     # For test_engine.multi_gpu_test_net_on_dataset
     args.test_net_file, _ = os.path.splitext(__file__)

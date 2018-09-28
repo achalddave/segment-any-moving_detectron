@@ -177,20 +177,24 @@ def main():
     if not args.no_save:
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        setup_logging(os.path.join(output_dir, 'detectron.log'))
+        logging_path = os.path.join(output_dir, 'detectron.log')
+        setup_logging(logging_path)
         subprocess.call([
             './git-state/save_git_state.sh',
             os.path.join(output_dir, 'git-state')
         ])
+        file_logger = logging.getLogger(logging_path)
         with open(os.path.join(output_dir, 'experiment_id.txt'), 'w') as f:
             f.write('%s\n' % experiment_id)
     else:
         setup_logging()
+        file_logger = logging.getLogger(__name__)
     logger = logging.getLogger(__name__)
-    logger.info('Args: %s', pprint.pformat(orig_args))
-    logger.info('Config: %s', pprint.pformat(cfg))
-    logger.info('Experiment id: %s', experiment_id)
-    logger.info('Server host name: %s', socket.gethostname())
+
+    file_logger.info('Args: %s', pprint.pformat(orig_args))
+    file_logger.info('Config: %s', pprint.pformat(cfg))
+    file_logger.info('Experiment id: %s', experiment_id)
+    file_logger.info('Server host name: %s', socket.gethostname())
 
     ### Adaptively adjust some configs ###
     original_batch_size = cfg.NUM_GPUS * cfg.TRAIN.IMS_PER_BATCH
@@ -235,12 +239,15 @@ def main():
     # post_nms_topN = int(cfg[cfg_key].RPN_POST_NMS_TOP_N * cfg.FPN.RPN_COLLECT_SCALE + 0.5)
     if cfg.FPN.FPN_ON and cfg.MODEL.FASTER_RCNN:
         cfg.FPN.RPN_COLLECT_SCALE = cfg.TRAIN.IMS_PER_BATCH / original_ims_per_batch
-        logger.info('Scale FPN rpn_proposals collect size directly propotional to the change of IMS_PER_BATCH:\n'
-              '    cfg.FPN.RPN_COLLECT_SCALE: {}'.format(cfg.FPN.RPN_COLLECT_SCALE))
+        file_logger.info(
+            'Scale FPN rpn_proposals collect size directly propotional to the change of IMS_PER_BATCH:\n'
+            '    cfg.FPN.RPN_COLLECT_SCALE: {}'.format(
+                cfg.FPN.RPN_COLLECT_SCALE))
 
     if args.num_workers is not None:
         cfg.DATA_LOADER.NUM_THREADS = args.num_workers
-    logger.info('Number of data loading threads: %d' % cfg.DATA_LOADER.NUM_THREADS)
+    file_logger.info(
+        'Number of data loading threads: %d' % cfg.DATA_LOADER.NUM_THREADS)
 
     ### Overwrite some solver settings from command line arguments
     if args.optimizer is not None:
