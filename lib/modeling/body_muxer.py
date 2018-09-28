@@ -150,7 +150,8 @@ class BodyMuxer_ConcatenateConv(BodyMuxer_Concatenate):
         if output_channels is None:
             output_channels = self.bodies[0].dim_out
         input_channels = sum(x.dim_out for x in self.bodies)
-        self.conv = nn.Conv2d(input_channels, output_channels, 3, 3)
+        self.conv = nn.Conv2d(
+            input_channels, output_channels, kernel_size=3, padding=1)
         self.dim_out = output_channels
 
     def _merge(self, outputs):
