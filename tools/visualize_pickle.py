@@ -15,6 +15,7 @@ from pathlib import Path
 from pprint import pformat
 
 import cv2
+import numpy as np
 from tqdm import tqdm
 
 import _init_paths  # noqa: F401
@@ -62,13 +63,22 @@ def _set_logging(logging_filepath):
     logging.info('Writing log file to %s', logging_filepath)
 
 
-def visualize(image_path, pickle_path, output_path, dataset, thresh):
+def visualize(image_or_path, pickle_data_or_path, output_path, dataset, thresh):
     if output_path.exists():
         return
-    assert image_path.exists(), '%s does not exist' % image_path
-    im = cv2.imread(str(image_path))
-    with open(pickle_path, 'rb') as f:
-        data = pickle.load(f)
+
+    if isinstance(image_or_path, np.ndarray):
+        im = image_or_path
+    else:
+        assert image_or_path.exists(), '%s does not exist' % image_or_path
+        im = cv2.imread(str(image_or_path))
+
+    if isinstance(pickle_data_or_path, dict):
+        data = pickle_data_or_path
+    else:
+        with open(pickle_data_or_path, 'rb') as f:
+            data = pickle.load(f)
+
     vis_utils.vis_one_image(
         im[:, :, ::-1],  # BGR -> RGB for visualization
         output_path.stem,

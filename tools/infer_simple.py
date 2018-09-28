@@ -11,6 +11,7 @@ import sys
 import subprocess
 from collections import defaultdict
 from datetime import datetime
+from multiprocessing import Pool
 from pathlib import Path
 from pprint import pformat
 from six.moves import xrange
@@ -42,6 +43,7 @@ from utils.detectron_weight_helper import load_detectron_weight
 from utils.flow import load_flow_png
 from utils.logging import setup_logging
 from utils.timer import Timer
+from visualize_pickle import visualize
 
 # OpenCL may be enabled by default in OpenCV3; disable it because it's not
 # thread safe and causes unwanted GPU memory allocations.
@@ -86,6 +88,11 @@ def parse_args():
         help="Look recursively in --image_dir for images.")
     parser.add_argument(
         '--save_images', type=distutils.util.strtobool, default=True)
+    parser.add_argument(
+        '--vis_image_dir',
+        help=('Images to use for visualization. Useful, e.g., when inferring '
+              'on one modality (flow) but visualizing on another (RGB).'))
+    parser.add_argument('--vis_num_workers', default=4, type=int)
 
     args = parser.parse_args()
 
@@ -95,6 +102,13 @@ def parse_args():
 def is_image(path):
     return path.is_file and any(path.suffix == extension
                                 for extension in misc_utils.IMG_EXTENSIONS)
+
+
+def find_extension(path):
+    for extension in misc_utils.IMG_EXTENSIONS:
+        if path.with_suffix(extension).exists():
+            return extension
+    return None
 
 
 def main():
@@ -199,18 +213,56 @@ def main():
         else:
             images = [x for x in image_dir.iterdir() if is_image(x)]
         if not images:
-            raise ValueError('Found no images in %s' % args.image_dir)
+            error = 'Found no images in %s .' % args.image_dir
+            if (not args.recursive
+                    and any(x.is_dir() for x in image_dir.iterdir())):
+                error += ' Did you mean to specify --recursive?'
+            raise ValueError(error)
         output_images = [
             (output_dir / x.relative_to(image_dir)).with_suffix('.png')
             for x in images
         ]
+        if args.vis_image_dir:
+            vis_image_dir = Path(args.vis_image_dir)
+            # Try to guess the right visualization extension.
+            first_image = vis_image_dir / images[0].relative_to(image_dir)
+            vis_extension = find_extension(first_image)
+            if vis_extension is None:
+                raise ValueError(
+                    "Couldn't find visualization image with any extension: %s"
+                    % first_image.with_suffix(''))
+            vis_images = [(vis_image_dir /
+                           x.relative_to(image_dir)).with_suffix(vis_extension)
+                          for x in images]
+        else:
+            vis_images = list(images)
     else:
         images = [Path(x) for x in args.images]
         output_images = [output_dir / (x.stem + '.png') for x in images]
+        vis_images = list(images)
     output_pickles = [x.with_suffix('.pickle') for x in output_images]
 
-    for image_path, out_image, out_data in zip(
-            tqdm(images), output_images, output_pickles):
+    if args.save_images:
+        # This is the type of parallel code that would really benefit from
+        # using the concurrent.futures API, but unfortunately, for some reason,
+        # OpenCV hangs when visualizing in a process launched through a
+        # futures.ProcessPoolExecutor, but works fine through a
+        # multiprocessing.Pool process.
+        pool = Pool(args.vis_num_workers)
+
+        # Match 'Infer: ' prefix later.
+        vis_progress = tqdm(desc='Vis  ', position=1, total=len(images))
+
+        def visualization_callback(result):
+            vis_progress.update()
+
+        def visualization_error(error):
+            logging.error('Error when visualizing:')
+            logging.error(error)
+
+    for image_path, vis_path, out_image, out_data in zip(
+            tqdm(images, desc='Infer', position=0), vis_images,
+            output_images, output_pickles):
         if input_is_flow:
             im = load_flow_png(str(image_path))
         else:
@@ -221,6 +273,7 @@ def main():
                 and os.path.isfile(out_data)):
             file_logger.info(
                 'Already processed {}, skipping'.format(image_path))
+            vis_progress.update()
             continue
         timers = defaultdict(Timer)
 
@@ -229,34 +282,42 @@ def main():
 
         file_logger.info('Processing {} -> {}'.format(
             image_path, out_image if args.save_images else out_data))
-
-        if args.save_images and not os.path.isfile(out_image):
-            out_image.parent.mkdir(exist_ok=True, parents=True)
-            vis_utils.vis_one_image(
-                im[:, :, ::-1],  # BGR -> RGB for visualization
-                out_image.stem,
-                out_image.parent,
-                cls_boxes,
-                cls_segms,
-                cls_keyps,
-                dataset=dataset,
-                box_alpha=0.3,
-                show_class=True,
-                thresh=0.7,
-                kp_thresh=2,
-                dpi=300,
-                ext='png'
-            )
+        data = {
+            'boxes': cls_boxes,
+            'segmentations': cls_segms,
+            'keypoints': cls_keyps,
+        }
 
         if not os.path.isfile(out_data):
             out_data.parent.mkdir(exist_ok=True, parents=True)
             with open(out_data, 'wb') as f:
-                data = {
-                    'boxes': cls_boxes,
-                    'segmentations': cls_segms,
-                    'keypoints': cls_keyps,
-                }
                 pickle.dump(data, f)
+
+        def raiser(e):
+            raise e
+
+        if args.save_images and os.path.isfile(out_image):
+            vis_progress.update()
+        elif args.save_images:
+            out_image.parent.mkdir(exist_ok=True, parents=True)
+            if vis_path != image_path:
+                vis_im = vis_path
+            else:
+                vis_im = im
+            pool.apply_async(
+                visualize,
+                kwds=dict(
+                    image_or_path=vis_im,
+                    pickle_data_or_path=data,
+                    output_path=out_image,
+                    dataset=dataset,
+                    thresh=0.7),
+                callback=visualization_callback,
+                error_callback=visualization_error)
+
+    if args.save_images:
+        pool.close()
+        pool.join()
 
 
 if __name__ == '__main__':
