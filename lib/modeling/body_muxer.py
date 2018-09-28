@@ -157,3 +157,30 @@ class BodyMuxer_ConcatenateConv(BodyMuxer_Concatenate):
     def _merge(self, outputs):
         concatenated = super()._merge(outputs)
         return self.conv(concatenated)
+
+    def init_conv_select_index_(self, body_index):
+        """Initialize conv to select the outputs of a specific body."""
+        body = self.bodies[body_index]
+        assert self.dim_out == body.dim_out
+
+        # Input channel start_index corresponding to outputs of the specified
+        # body's outputs.
+        start_index = sum(x.dim_out for x in self.bodies[:body_index])
+        kw, kh = self.conv.kernel_size
+
+        assert kw % 2 == 1
+        assert kh % 2 == 1
+        mid_w = (kw - 1) / 2
+        mid_h = (kh - 1) / 2
+        assert mid_w.is_integer()
+        assert mid_h.is_integer()
+        mid_w = int(mid_w)
+        mid_h = int(mid_h)
+
+        # Shape (output_channels, input_channels, w, h)
+        weight = self.conv.weight.data
+        weight.zero_()
+        for o in range(body.dim_out):
+            weight[o, start_index+o, mid_w, mid_h] = 1
+
+        self.conv.bias.data.zero_()

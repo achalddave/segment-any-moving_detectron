@@ -16,6 +16,7 @@ import _init_paths  # noqa: F401
 import core.config as config_utils
 import utils.net as net_utils
 from core.config import cfg
+from modeling import body_muxer
 from modeling.model_builder import Generalized_RCNN
 from utils.logging import setup_logging
 
@@ -73,6 +74,12 @@ def main():
 
             for child, child_state_dict in children_state_dicts.items():
                 model._modules[child].load_state_dict(child_state_dict)
+
+    if isinstance(model.Conv_Body, body_muxer.BodyMuxer_ConcatenateConv):
+        logging.info(
+            'Initializing BodyMuxer_ConcatenateConv.conv to select '
+            'RPN features from body %s directly.' % args.head_weights_index)
+        model.Conv_Body.init_conv_select_index_(args.head_weights_index)
 
     # The actual model state dict needs to be stored in a dictionary with
     # 'model' as the key for train_net_step.py, test_net.py, etc.
