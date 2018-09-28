@@ -1062,6 +1062,9 @@ def assert_and_infer_cfg(make_immutable=True):
         init.normal_ = init.normal
         init.constant_ = init.constant
         nn.GroupNorm = mynn.GroupNorm
+    if isinstance(cfg.PIXEL_MEANS, list):
+        cfg.PIXEL_MEANS = np.concatenate(cfg.PIXEL_MEANS, axis=-1)
+
     if make_immutable:
         cfg.immutable(True)
 

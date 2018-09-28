@@ -55,7 +55,6 @@ def _get_image_blob(roidb):
     # List of (w, h, 3 * DATA_LOADER.NUM_INPUTS) images.
     processed_ims = []
     im_scales = []
-    pixel_means = np.concatenate(cfg.PIXEL_MEANS, axis=-1)
     for i in range(num_images):
         # Shape (w, h, 3 * DATA_LOADER.NUM_INPUTS)
         im = blob_utils.pack_sequence(roidb[i]['dataset'].load_image(roidb[i]))
@@ -74,7 +73,7 @@ def _get_image_blob(roidb):
         # way, so all images in the sequence should be processed
         # identically.
         im, im_scale = blob_utils.prep_im_for_blob(
-            im, pixel_means, [target_size], cfg.TRAIN.MAX_SIZE)
+            im, cfg.PIXEL_MEANS, [target_size], cfg.TRAIN.MAX_SIZE)
         im_scales.append(im_scale[0])
         processed_ims.append(im[0])
 
