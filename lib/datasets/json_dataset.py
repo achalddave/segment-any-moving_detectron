@@ -143,30 +143,6 @@ class SingleInputJsonDataset(object):
             for k, v in self.json_category_id_to_contiguous_id.items()
         }
 
-    def frame_offset(self, frame_path, frame_offset):
-        """Retrieve frame path for a frame at an offset from current frame.
-
-        If the frame at frame + offset doesn't exist, this returns the current
-        frame."""
-        if frame_offset == 0:
-            return frame_path
-
-        if 'ytvos' in self.name or 'davis' in self.name:
-            frame_path = Path(frame_path)
-            frame_index = int(frame_path.stem)
-            new_frame_index = frame_index + frame_offset
-            new_frame_index_str = str(new_frame_index).zfill(
-                len(frame_path.stem))
-            new_path = frame_path.with_name(new_frame_index_str +
-                                            frame_path.suffix)
-            if new_path.exists():
-                return new_path
-            else:
-                return frame_path
-        else:
-            raise NotImplementedError(
-                'Frame arithmetic not supported for dataset: %s' % self.name)
-
     def load_image(self, entry):
         return load_image_path(entry['image'], self.name)
 
