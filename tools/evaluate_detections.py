@@ -48,8 +48,9 @@ def main():
     if args.cfg_file is not None:
         merge_cfg_from_file(args.cfg_file)
 
-    dataset = load_dataset(args.dataset, cfg.DATA_LOADER.INPUT_FRAME_OFFSETS)
-    tools_util.update_cfg_for_dataset(args.dataset)
+    dataset = load_dataset([args.dataset],
+                           cfg.DATA_LOADER.INPUT_FRAME_OFFSETS)
+    tools_util.update_cfg_for_dataset([args.dataset])
     cfg.TEST.DATASETS = (args.dataset, )
 
     assert_and_infer_cfg()
