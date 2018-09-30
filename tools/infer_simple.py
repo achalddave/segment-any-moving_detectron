@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
+import collections
 import distutils.util
 import logging
 import os
@@ -19,6 +20,7 @@ from six.moves import xrange
 # Use a non-interactive backend
 import matplotlib ; matplotlib.use('Agg')
 
+from natsort import natsorted, ns
 import numpy as np
 import cv2
 from tqdm import tqdm
@@ -39,6 +41,7 @@ import utils.misc as misc_utils
 import utils.net as net_utils
 import utils.vis as vis_utils
 from datasets import dataset_catalog
+from utils.blob import pack_sequence
 from utils.detectron_weight_helper import load_detectron_weight
 from utils.flow import load_flow_png
 from utils.logging import setup_logging
@@ -53,9 +56,7 @@ cv2.ocl.setUseOpenCL(False)
 def parse_args():
     """Parse in command line arguments"""
     parser = argparse.ArgumentParser(description='Demonstrate mask-rcnn results')
-    parser.add_argument(
-        '--dataset', required=True,
-        help='training dataset')
+    parser.add_argument('--datasets', nargs='+', help='training dataset')
 
     parser.add_argument(
         '--cfg', dest='cfg_file', required=True,
@@ -73,11 +74,13 @@ def parse_args():
         '--load_detectron', help='path to the detectron weight pickle file')
 
     parser.add_argument(
-        '--image_dir',
+        '--image_dirs',
+        nargs='*',
         help='directory to load images for demo')
     parser.add_argument(
         '--images', nargs='+',
-        help='images to infer. Must not use with --image_dir')
+        help=('images to infer. Must not use with --image_dirs. If the model '
+              'requires multiple input datasets, use --image_dirs instead.'))
     parser.add_argument(
         '--output_dir',
         help='directory to save demo results',
@@ -85,7 +88,7 @@ def parse_args():
     parser.add_argument(
         '--recursive',
         action='store_true',
-        help="Look recursively in --image_dir for images.")
+        help="Look recursively in --image_dirs for images.")
     parser.add_argument(
         '--save_images', type=distutils.util.strtobool, default=True)
     parser.add_argument(
@@ -134,24 +137,28 @@ def main():
     logging.info('Called with args:')
     logging.info(pformat(vars(args)))
 
-    assert args.image_dir or args.images
-    assert bool(args.image_dir) ^ bool(args.images)
+    assert args.image_dirs or args.images
+    assert bool(args.image_dirs) ^ bool(args.images)
 
     # If the config is a pickle file, the pixel means should already have been
     # edited at train time if necessary. Assume that the training code knew
     # better, and don't edit them here..
     config_is_pickle = args.cfg_file.endswith('.pkl')
     tools_util.update_cfg_for_dataset(
-        args.dataset, update_pixel_means=not config_is_pickle)
+        args.datasets, update_pixel_means=not config_is_pickle)
 
     if cfg.MODEL.NUM_CLASSES == 2:
         dataset = datasets.get_objectness_dataset()
     elif cfg.MODEL.NUM_CLASSES == 81:
         dataset = datasets.get_coco_dataset()
-    input_is_flow = dataset_catalog.DATASETS[args.dataset][
-        dataset_catalog.IS_FLOW]
-    if input_is_flow:
-        logging.info('Input treated as flow images.')
+
+    input_is_flow = [
+        dataset_catalog.DATASETS[x][dataset_catalog.IS_FLOW]
+        for x in args.datasets
+    ]
+    for i, is_flow in enumerate(input_is_flow):
+        if is_flow:
+            logging.info(f'Input {i} treated as flow images.')
 
     logging.info('load cfg from file: {}'.format(args.cfg_file))
     if args.cfg_file.endswith('.pkl'):
@@ -206,40 +213,67 @@ def main():
 
     maskRCNN.eval()
 
-    if args.image_dir:
-        image_dir = Path(args.image_dir)
-        if args.recursive:
-            images = [x for x in image_dir.rglob('*') if is_image(x)]
-        else:
-            images = [x for x in image_dir.iterdir() if is_image(x)]
-        if not images:
-            error = 'Found no images in %s .' % args.image_dir
-            if (not args.recursive
-                    and any(x.is_dir() for x in image_dir.iterdir())):
-                error += ' Did you mean to specify --recursive?'
-            raise ValueError(error)
-        output_images = [
-            (output_dir / x.relative_to(image_dir)).with_suffix('.png')
-            for x in images
+    if args.image_dirs:
+        image_dirs = [Path(x) for x in args.image_dirs]
+
+        # Collect all images from each image dir.
+        # all_images[i] contains a mapping from relative image paths to the
+        # absolute image path for image_dirs[i].
+        all_images = []
+        for image_dir in image_dirs:
+            if args.recursive:
+                images = [x for x in image_dir.rglob('*') if is_image(x)]
+            else:
+                images = [x for x in image_dir.iterdir() if is_image(x)]
+            if not images:
+                error = f'Found no images in {image_dir}.'
+                if (not args.recursive
+                        and any(x.is_dir() for x in image_dir.iterdir())):
+                    error += ' Did you mean to specify --recursive?'
+                raise ValueError(error)
+            all_images.append({
+                x.relative_to(image_dir).with_suffix(''): x
+                for x in images
+            })
+
+        all_relative_paths = [set(x.keys()) for x in all_images]
+
+        # Collect intersection of relative paths from each image dir.
+        relative_paths_union = set.union(*all_relative_paths)
+        relative_paths = set.intersection(*all_relative_paths)
+        num_missing = len(relative_paths_union) - len(relative_paths)
+        if num_missing:
+            logging.info(
+                f'Found {len(relative_paths_union)} unique images, '
+                f'but only {len(relative_paths)} are in all --image_dirs. '
+                f'({num_missing} missing)')
+
+        relative_paths = natsorted(relative_paths, alg=ns.PATH)
+        # Map relative path to list of images ordered as with image_dir
+        images = [
+            tuple(image_map[relative_path] for image_map in all_images)
+            for relative_path in relative_paths
         ]
+        output_images = [(output_dir / x).with_suffix('.png')
+                         for x in relative_paths]
+
         if args.vis_image_dir:
             vis_image_dir = Path(args.vis_image_dir)
             # Try to guess the right visualization extension.
-            first_image = vis_image_dir / images[0].relative_to(image_dir)
+            first_image = vis_image_dir / relative_paths[0]
             vis_extension = find_extension(first_image)
             if vis_extension is None:
                 raise ValueError(
                     "Couldn't find visualization image with any extension: %s"
                     % first_image.with_suffix(''))
-            vis_images = [(vis_image_dir /
-                           x.relative_to(image_dir)).with_suffix(vis_extension)
-                          for x in images]
+            vis_images = [(vis_image_dir / x).with_suffix(vis_extension)
+                          for x in relative_paths]
         else:
-            vis_images = list(images)
+            vis_images = [x[0] for x in images]
     else:
-        images = [Path(x) for x in args.images]
-        output_images = [output_dir / (x.stem + '.png') for x in images]
-        vis_images = list(images)
+        images = [(Path(x),) for x in args.images]
+        output_images = [output_dir / (x[0].stem + '.png') for x in images]
+        vis_images = [x[0] for x in images]
     output_pickles = [x.with_suffix('.pickle') for x in output_images]
 
     if args.save_images:
@@ -260,14 +294,17 @@ def main():
             logging.error('Error when visualizing:')
             logging.error(error)
 
-    for image_path, vis_path, out_image, out_data in zip(
+    for image_paths, vis_path, out_image, out_data in zip(
             tqdm(images, desc='Infer', position=0), vis_images,
             output_images, output_pickles):
-        if input_is_flow:
-            im = load_flow_png(str(image_path))
-        else:
-            im = cv2.imread(str(image_path))
-        assert im is not None
+        image_list = []
+        for is_flow, image_path in zip(input_is_flow, image_paths):
+            if is_flow:
+                im = load_flow_png(str(image_path))
+            else:
+                im = cv2.imread(str(image_path))
+            assert im is not None
+            image_list.append(im)
 
         if ((not args.save_images or os.path.isfile(out_image))
                 and os.path.isfile(out_data)):
@@ -278,7 +315,7 @@ def main():
         timers = defaultdict(Timer)
 
         cls_boxes, cls_segms, cls_keyps = im_detect_all(
-            maskRCNN, im, timers=timers)
+            maskRCNN, pack_sequence(image_list), timers=timers)
 
         file_logger.info('Processing {} -> {}'.format(
             image_path, out_image if args.save_images else out_data))
@@ -300,14 +337,10 @@ def main():
             vis_progress.update()
         elif args.save_images:
             out_image.parent.mkdir(exist_ok=True, parents=True)
-            if vis_path != image_path:
-                vis_im = vis_path
-            else:
-                vis_im = im
             pool.apply_async(
                 visualize,
                 kwds=dict(
-                    image_or_path=vis_im,
+                    image_or_path=vis_path,
                     pickle_data_or_path=data,
                     output_path=out_image,
                     dataset=dataset,
