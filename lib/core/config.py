@@ -180,7 +180,7 @@ __C.DATA_LOADER = AttrDict()
 __C.DATA_LOADER.NUM_THREADS = 4
 
 # Number of input datasets.
-__C.DATA_LOADER.NUM_INPUTS = 2
+__C.DATA_LOADER.NUM_INPUTS = 1
 
 # Frame offset for each of the inputs. This can be used, for example, to load a
 # sequence of frames for each of the inputs.
