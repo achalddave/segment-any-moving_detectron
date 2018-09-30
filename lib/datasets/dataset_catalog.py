@@ -658,6 +658,41 @@ DATASETS = {
         IS_FLOW: True,
         IMAGE_EXTENSION: '.png'
     },
+    'ytvos_hed_sub_train_8-21-18': {
+        IM_DIR: _DATA_DIR + '/ytvos/hed/train',
+        ANN_FN: _DATA_DIR + '/ytvos/train-splits/sub-train-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False,
+        IMAGE_EXTENSION: '.png'
+    },
+    'ytvos_hed_all_moving_sub_train_8-21-18': {
+        IM_DIR: _DATA_DIR + '/ytvos/hed/train',
+        ANN_FN: _DATA_DIR + '/ytvos/all-moving-8-21-18/sub-train-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False,
+        IMAGE_EXTENSION: '.png'
+    },
+    'ytvos_hed_all_moving_strict_sub_train_8-21-18': {
+        IM_DIR: _DATA_DIR + '/ytvos/hed/train',
+        ANN_FN: _DATA_DIR + '/ytvos/all-moving-8-21-18/strict/sub-train-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False,
+        IMAGE_EXTENSION: '.png'
+    },
+    'ytvos_hed_all_moving_strict_sub_val_8-21-18': {
+        IM_DIR: _DATA_DIR + '/ytvos/hed/train',
+        ANN_FN: _DATA_DIR + '/ytvos/all-moving-8-21-18/strict/sub-val-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False,
+        IMAGE_EXTENSION: '.png'
+    },
+    'ytvos_hed_all_moving_strict_interesting_sub_val_8-21-18': {
+        IM_DIR: _DATA_DIR + '/ytvos/hed/train',
+        ANN_FN: _DATA_DIR + '/ytvos/all-moving-8-21-18/strict/interesting-only/sub-val-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False,
+        IMAGE_EXTENSION: '.png'
+    },
     'ytvos_flownet2_sub_train_8-21-18': {
         IM_DIR: _DATA_DIR + '/ytvos/flownet2/train',
         ANN_FN: _DATA_DIR + '/ytvos/train-splits/sub-train-no-last-frame.json',
