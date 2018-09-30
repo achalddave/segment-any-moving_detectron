@@ -1216,6 +1216,14 @@ def _check_and_coerce_cfg_value_type(value_a, value_b, key, full_key):
         value_a = list(value_a)
     elif isinstance(value_a, list) and isinstance(value_b, tuple):
         value_a = tuple(value_a)
+    elif full_key == 'PIXEL_MEANS' and isinstance(value_a, np.ndarray):
+        # The pixel means are easier to specify in YAML as a list, but get
+        # coerced into a numpy array in assert_and_infer_cfg for ease of use
+        # throughout the code. When this inferred cfg is saved to disk and
+        # re-loaded, the value stays a numpy array, so we have to turn it back
+        # into a list for the types to match.
+        assert (value_a.shape[2] % 3) == 0
+        value_a = np.split(value_a, int(value_a.shape[2]/3), axis=2)
     else:
         raise ValueError(
             'Type mismatch ({} vs. {}) with values ({} vs. {}) for config '
