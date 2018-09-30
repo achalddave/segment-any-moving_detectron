@@ -1025,6 +1025,17 @@ __C.DEBUG = False
 __C.PYTORCH_VERSION_LESS_THAN_040 = False
 
 # ---------------------------------------------------------------------------- #
+# Deprecated options
+# If an option is removed from the code and you don't want to break existing
+# yaml configs, you can add the full config key as a string to the set below.
+# ---------------------------------------------------------------------------- #
+_DEPRECATED_KEYS = set(
+    {
+        'DATA_LOADER.NUM_STACKED_FRAMES',
+    }
+)
+
+# ---------------------------------------------------------------------------- #
 # mask heads or keypoint heads that share res5 stage weights and
 # training forward computation with box head.
 # ---------------------------------------------------------------------------- #
@@ -1033,6 +1044,15 @@ _SHARE_RES5_HEADS = set(
         'mask_rcnn_heads.mask_rcnn_fcn_head_v0upshare',
     ]
 )
+
+
+def _key_is_deprecated(full_key):
+    if full_key in _DEPRECATED_KEYS:
+        logging.warn(
+            'Deprecated config key (ignoring): {}'.format(full_key)
+        )
+        return True
+    return False
 
 
 def assert_and_infer_cfg(make_immutable=True):
@@ -1089,8 +1109,9 @@ def merge_cfg_from_list(cfg_list):
     """
     assert len(cfg_list) % 2 == 0
     for full_key, v in zip(cfg_list[0::2], cfg_list[1::2]):
-        # if _key_is_deprecated(full_key):
-        #     continue
+        if _key_is_deprecated(full_key):
+            logging.info('Ignoring deprecated key: %s' % full_key)
+            continue
         # if _key_is_renamed(full_key):
         #     _raise_key_rename_error(full_key)
         key_list = full_key.split('.')
@@ -1120,8 +1141,8 @@ def _merge_a_into_b(a, b, stack=None):
         full_key = '.'.join(stack) + '.' + k if stack is not None else k
         # a must specify keys that are in b
         if k not in b:
-            # if _key_is_deprecated(full_key):
-            #     continue
+            if _key_is_deprecated(full_key):
+                continue
             # elif _key_is_renamed(full_key):
             #     _raise_key_rename_error(full_key)
             # else:
