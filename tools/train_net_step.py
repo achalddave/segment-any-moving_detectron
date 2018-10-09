@@ -404,7 +404,7 @@ def main():
         args.disp_interval,
         tblogger if args.use_tfboard and not args.no_save else None)
     try:
-        logger.info('Training starts !')
+        logger.info('Training starts!')
         step = args.start_step
         for step in range(args.start_step, cfg.SOLVER.MAX_ITER):
 
