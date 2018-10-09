@@ -121,18 +121,18 @@ def main():
         sys.exit("Need a CUDA device to run the code.")
 
     args = parse_args()
+    launch_time_str = datetime.now().strftime('%b%d-%H-%M-%S')
     output_dir = Path(args.output_dir)
     logging_path = str(output_dir / (
-        'detectron-pytorch-%s.log' % datetime.now().strftime('%b%d-%H-%M-%S')))
+        'detectron-pytorch-%s.log' % launch_time_str))
     output_dir.mkdir(parents=True, exist_ok=True)
     setup_logging(logging_path)
 
     file_logger = logging.getLogger(logging_path)
-    file_logger.info('Source code:')
-    file_logger.info('===')
-    with open(__file__, 'r') as f:
-        file_logger.info(f.read())
-    file_logger.info('===')
+    subprocess.call([
+        './git-state/save_git_state.sh',
+        str(output_dir / ('git-state_%s' % launch_time_str))
+    ])
 
     logging.info('Called with args:')
     logging.info(pformat(vars(args)))
