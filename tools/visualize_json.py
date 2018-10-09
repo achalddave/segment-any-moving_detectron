@@ -38,6 +38,7 @@ def main():
     parser.add_argument(
         '--images-extension',
         default='.png')
+    parser.add_argument('--threshold', default=0.7, type=float)
 
     args = parser.parse_args()
 
@@ -88,6 +89,8 @@ def main():
         image_path = (images_root / ann['file_name']).with_suffix(
             args.images_extension)
         output_path = (output_root / ann['file_name']).with_suffix('.png')
+        if output_path.exists():
+            continue
         boxes = bbox_annotations[ann['id']]
         segmentations = mask_annotations[ann['id']]
         cls_boxes = [[] for _ in range(num_categories + 1)]
@@ -117,7 +120,7 @@ def main():
             dataset=dataset,
             box_alpha=1.0,
             show_class=True,
-            thresh=0.7,
+            thresh=args.threshold,
             kp_thresh=2,
             dpi=300,
             ext='png')
