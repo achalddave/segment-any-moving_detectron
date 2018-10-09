@@ -5,6 +5,7 @@ import collections
 import json
 import logging
 import pickle
+from datetime import datetime
 from pathlib import Path
 from pprint import pformat
 
@@ -54,9 +55,11 @@ def main():
         num_categories = len(groundtruth['categories'])
         images = groundtruth['images']
 
+    launch_time_str = datetime.now().strftime('%b%d-%H-%M-%S')
     output_root = Path(args.output_dir)
     output_root.mkdir(parents=True, exist_ok=True)
-    setup_logging(str(output_root / 'visualization.log'))
+    setup_logging(
+        str(output_root / ('visualization_%s.log' % launch_time_str)))
     logging.info('Args: %s', pformat(vars(args)))
 
     num_classes = dataset_catalog.DATASETS[args.dataset][
