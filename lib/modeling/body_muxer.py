@@ -38,13 +38,18 @@ class BodyMuxer(nn.Module, abc.ABC):
 
         # List of length len(conv_bodies). Each element is a list of channels
         # indicating the inputs to pass to the corresponding conv_body.
-        self.body_channels = []
-        for input_indices in conv_body_inputs:
+        self.body_channels = self._inputs_to_channels(conv_body_inputs)
+        self.mapping_to_detectron = None
+
+    @staticmethod
+    def _inputs_to_channels(inputs):
+        body_channels = []
+        for input_indices in inputs:
             selected_channels = []
             for i in input_indices:
                 selected_channels += (3 * i, 3 * i + 1, 3 * i + 2)
-            self.body_channels.append(selected_channels)
-        self.mapping_to_detectron = None
+            body_channels.append(selected_channels)
+        return body_channels
 
     def _body_key(self, i):
         return 'body_%s' % i
@@ -182,3 +187,138 @@ class BodyMuxer_ConcatenateConv(BodyMuxer_Concatenate):
             weight[o, start_index+o, mid_w, mid_h] = 1
 
         self.conv.bias.data.zero_()
+
+
+class BodyMuxer_Difference(BodyMuxer):
+    """Use a single backbone on all inputs and output consecutive differences.
+
+    This module maintains a single conv_body. During the forward pass, the
+    conv_body is applied to each of the conv_body_inputs. The output is a
+    concatenation of the differences between the outputs corresponding to
+    consecutive conv_body_inputs.
+    """
+    def __init__(self, conv_bodies, conv_body_inputs):
+        assert_all_equal(
+            conv_bodies,
+            '{name} relies on a single, shared conv_body, but conv_bodies do '
+            'not match:'.format(name=type(self).__name__)
+        )
+        nn.Module.__init__(self)
+        self.body = conv_bodies[0]()
+        self.dim_out = self.body.dim_out * (len(conv_body_inputs) - 1)
+        self.spatial_scale = self.body.spatial_scale
+        self.body_channels = self._inputs_to_channels(conv_body_inputs)
+
+        self.mapping_to_detectron = None
+
+    def detectron_weight_mapping(self):
+        # Copied from Generalized_RCNN.detectron_weight_mapping.
+        if self.mapping_to_detectron is None:
+            d_wmap = {}  # detectron_weight_mapping
+            d_orphan = []  # detectron orphan weight list
+            if list(self.body.parameters()):  # if module has any parameter
+                child_map, child_orphan = (
+                    self.body.detectron_weight_mapping())
+                d_orphan.extend(child_orphan)
+                for key, value in child_map.items():
+                    new_key = 'body.' + key
+                    d_wmap[new_key] = value
+
+            for name, m_child in self.named_children():
+                if name == 'body':
+                    continue
+                # We need to have each module in the d_wmap for loading a
+                # checkpoint using utils.net.load_ckpt, even if there is no
+                # detectron equivalent key.
+                for key in m_child.state_dict():
+                    d_wmap[name + '.' + key] = '# NO_DETECTRON_EQUIVALENT'
+            self.mapping_to_detectron = d_wmap
+            self.orphans_in_detectron = d_orphan
+
+        return self.mapping_to_detectron, self.orphans_in_detectron
+
+    def _merge(self, outputs):
+        """
+        Args:
+            outputs (list): Each element is an array of shape
+                (num_images, num_channels, width, height), where num_channels
+                is self.conv_bodies[0].dim_out.
+
+        Returns:
+            outputs (np.ndarray): Shape (num_images, concat_channels, width,
+                height). concat_channels is
+                (len(self.conv_bodies) - 1) * num_channels.
+        """
+        assert_all_equal([x.shape for x in outputs],
+                         '[Likely an implementation bug] Shapes of outputs do '
+                         'not match: ')
+        output = torch.cat(outputs, dim=1)
+        return output[:, self.dim_out:] - output[:, :-self.dim_out]
+
+    def forward(self, inputs):
+        """
+        Args:
+            inputs (np.ndarray): Shape
+                (batch_size, 3 * DATA_LOADER.NUM_INPUTS, w, h).
+        """
+        # This code is heavily duplicated from BodyMuxer to allow for a single
+        # body to be run on multiple inputs.
+        outputs = [
+            self.body(inputs[:, selected_channels, :, :])
+            for selected_channels in self.body_channels
+        ]
+
+        if isinstance(outputs[0], list):
+            # FPN, concatenate every corresponding level in outputs.
+            num_levels = len(outputs[0])
+            for i, output in enumerate(outputs[1:]):
+                assert len(output) == num_levels, (
+                    'Different number of FPN outputs in body %i and body 0 '
+                    '(%s vs %s)' % (i+1, len(output), num_levels))
+
+            concatenated_outputs = [
+                self._merge([output[level] for output in outputs])
+                for level in range(num_levels)
+            ]
+        else:
+            concatenated_outputs = self._merge(outputs)
+        return concatenated_outputs
+
+
+class BodyMuxer_DifferenceConcatenateConv(BodyMuxer_Difference):
+    """Concatenate first output with successive differences, then apply a conv.
+
+    This is like BodyMuxer_Difference, except instead of outputting the
+    concatenation of
+        outputs[1] - outputs[0], ...
+    we first concatenate
+        outputs[0], outputs[1] - outputs[0], ...
+    and then apply a conv to reduce the dimensionality to self.body.dim_out.
+    """
+    def __init__(self, conv_bodies, conv_body_inputs):
+        super().__init__(conv_bodies, conv_body_inputs)
+        self.dim_out = self.body.dim_out
+        input_channels = self.body.dim_out * len(conv_body_inputs)
+        self.conv = nn.Conv2d(
+            input_channels, self.dim_out, kernel_size=3, padding=1)
+
+    def _merge(self, outputs):
+        """
+        Args:
+            outputs (list): Each element is an array of shape
+                (num_images, num_channels, width, height), where num_channels
+                is self.conv_bodies[0].dim_out.
+
+        Returns:
+            outputs (np.ndarray): Shape (num_images, concat_channels, width,
+                height). concat_channels is
+                (len(self.conv_bodies)) * num_channels.
+        """
+        assert_all_equal([x.shape for x in outputs],
+                         '[Likely an implementation bug] Shapes of outputs do '
+                         'not match: ')
+        output = torch.cat(outputs, dim=1)
+        first_output = output[:, :self.dim_out]
+        differences = output[:, self.dim_out:] - output[:, :-self.dim_out]
+        output = torch.cat([first_output, differences], dim=1)
+        return self.conv(output)
