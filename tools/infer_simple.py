@@ -165,14 +165,13 @@ def main():
         import yaml
         with open(args.cfg_file, 'rb') as f:
             other_cfg = yaml.load(pickle.load(f)['cfg'])
-            detectron_dir = Path(__file__).parent.parent
-            if Path(other_cfg['ROOT_DIR']) != detectron_dir:
-                other_cfg['ROOT_DIR'] = str(detectron_dir)
-                logging.info(
-                    'Updating ROOT_DIR in loaded config to '
-                    'current ROOT_DIR: %s' % other_cfg['ROOT_DIR'])
-
-            merge_cfg_from_cfg(other_cfg)
+        detectron_dir = Path(__file__).parent.parent
+        if Path(other_cfg['ROOT_DIR']) != detectron_dir:
+            other_cfg['ROOT_DIR'] = str(detectron_dir)
+            logging.info(
+                'Updating ROOT_DIR in loaded config to '
+                'current ROOT_DIR: %s' % other_cfg['ROOT_DIR'])
+        merge_cfg_from_cfg(other_cfg)
     else:
         cfg_from_file(args.cfg_file)
 
