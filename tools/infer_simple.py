@@ -56,7 +56,6 @@ cv2.ocl.setUseOpenCL(False)
 def parse_args():
     """Parse in command line arguments"""
     parser = argparse.ArgumentParser(description='Demonstrate mask-rcnn results')
-    parser.add_argument('--datasets', nargs='+', help='training dataset')
 
     parser.add_argument(
         '--cfg', dest='cfg_file', required=True,
@@ -96,6 +95,18 @@ def parse_args():
         help=('Images to use for visualization. Useful, e.g., when inferring '
               'on one modality (flow) but visualizing on another (RGB).'))
     parser.add_argument('--vis_num_workers', default=4, type=int)
+
+    parser.add_argument(
+        '--input_types',
+        choices=['rgb', 'flow'],
+        nargs='*',
+        help=('Indicates whether to load the input as a plain RGB image, or '
+              'as an angle/magnitude flow png. If there are multiple '
+              '--image_dirs, --input_types should be of the same length.'))
+    parser.add_argument(
+        '--num_classes',
+        type=int,
+        help='If specified, update num classes to this.')
 
     args = parser.parse_args()
 
@@ -140,25 +151,37 @@ def main():
     assert args.image_dirs or args.images
     assert bool(args.image_dirs) ^ bool(args.images)
 
+    num_inputs = len(args.image_dirs) if args.image_dirs is not None else 1
+
+    if args.input_types is None:
+        logging.info('Input type not specified, assuming RGB for all.')
+        args.input_types = ['rgb'] * num_inputs
+
+    if args.image_dirs is not None:
+        assert len(args.image_dirs) == len(args.input_types)
+
+    input_is_flow = [x == 'flow' for x in args.input_types]
+
+    if args.num_classes is None:
+        args.num_classes = cfg.MODEL.NUM_CLASSES
+
+    if args.num_classes == 2:
+        dataset = datasets.get_objectness_dataset()
+    elif args.num_classes == 81:
+        dataset = datasets.get_coco_dataset()
+    else:
+        raise ValueError(f'Unknown number of classes: {args.num_classes}')
+
     # If the config is a pickle file, the pixel means should already have been
     # edited at train time if necessary. Assume that the training code knew
-    # better, and don't edit them here..
-    config_is_pickle = args.cfg_file.endswith('.pkl')
-    tools_util.update_cfg_for_dataset(
-        args.datasets, update_pixel_means=not config_is_pickle)
-
-    if cfg.MODEL.NUM_CLASSES == 2:
-        dataset = datasets.get_objectness_dataset()
-    elif cfg.MODEL.NUM_CLASSES == 81:
-        dataset = datasets.get_coco_dataset()
-
-    input_is_flow = [
-        dataset_catalog.DATASETS[x][dataset_catalog.IS_FLOW]
-        for x in args.datasets
-    ]
+    # better, and don't edit them here.
+    should_update_pixel_means = not args.cfg_file.endswith('.pkl')
     for i, is_flow in enumerate(input_is_flow):
         if is_flow:
             logging.info(f'Input {i} treated as flow images.')
+            if should_update_pixel_means:
+                logging.info(f'Setting pixel mean for input {i} to 0.')
+                cfg.PIXEL_MEANS[i] = np.zeros((1, 1, 3))
 
     logging.info('load cfg from file: {}'.format(args.cfg_file))
     if args.cfg_file.endswith('.pkl'):
