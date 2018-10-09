@@ -165,15 +165,6 @@ def main():
         import yaml
         with open(args.cfg_file, 'rb') as f:
             other_cfg = yaml.load(pickle.load(f)['cfg'])
-            # For some reason, the RPN_COLLECT_SCALE defaults to a float,
-            # but is required to be an int by the config loading code, so
-            # we update it to be an int.
-            try:
-                other_cfg['FPN']['RPN_COLLECT_SCALE'] = int(
-                    other_cfg['FPN']['RPN_COLLECT_SCALE'])
-            except KeyError:
-                pass
-
             detectron_dir = Path(__file__).parent.parent
             if Path(other_cfg['ROOT_DIR']) != detectron_dir:
                 other_cfg['ROOT_DIR'] = str(detectron_dir)

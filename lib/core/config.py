@@ -1216,6 +1216,11 @@ def _check_and_coerce_cfg_value_type(value_a, value_b, key, full_key):
         value_a = list(value_a)
     elif isinstance(value_a, list) and isinstance(value_b, tuple):
         value_a = tuple(value_a)
+    elif full_key == 'FPN.RPN_COLLECT_SCALE':
+        # For some reason, the RPN_COLLECT_SCALE defaults to a float when
+        # dumped to YAML and re-loaded, so we try to update it to be an int.
+        if isinstance(value_a, float) and value_a.is_integer():
+            value_a = int(value_a)
     elif full_key == 'PIXEL_MEANS' and isinstance(value_a, np.ndarray):
         # The pixel means are easier to specify in YAML as a list, but get
         # coerced into a numpy array in assert_and_infer_cfg for ease of use
