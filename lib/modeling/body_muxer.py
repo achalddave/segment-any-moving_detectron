@@ -14,8 +14,6 @@ def assert_all_equal(lst, error_prefix=''):
     return True
 
 
-# TODO(achald): [MultiRPN] Write a script to create a BodyMuxer from
-# pre-trained weights.
 class BodyMuxer(nn.Module, abc.ABC):
     # BodyMuxer should not be directly constructed. Instead, use
     # BodyMuxer_<merger>, e.g., BodyMuxer_Average.
