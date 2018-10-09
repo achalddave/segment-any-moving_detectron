@@ -290,6 +290,13 @@ def main():
     for image_paths, vis_path, out_image, out_data in zip(
             tqdm(images, desc='Infer', position=0), vis_images,
             output_images, output_pickles):
+        if ((not args.save_images or os.path.isfile(out_image))
+                and os.path.isfile(out_data)):
+            file_logger.info(
+                'Already processed {}, skipping'.format((image_paths, )))
+            vis_progress.update()
+            continue
+
         image_list = []
         for is_flow, image_path in zip(input_is_flow, image_paths):
             if is_flow:
@@ -298,13 +305,6 @@ def main():
                 im = cv2.imread(str(image_path))
             assert im is not None
             image_list.append(im)
-
-        if ((not args.save_images or os.path.isfile(out_image))
-                and os.path.isfile(out_data)):
-            file_logger.info(
-                'Already processed {}, skipping'.format(image_path))
-            vis_progress.update()
-            continue
         timers = defaultdict(Timer)
 
         cls_boxes, cls_segms, cls_keyps = im_detect_all(
