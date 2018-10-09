@@ -183,6 +183,9 @@ def main():
     cfg.MODEL.LOAD_IMAGENET_PRETRAINED_WEIGHTS = False  # Don't need to load imagenet pretrained weights
     assert_and_infer_cfg()
 
+    file_logger.info('Config:')
+    file_logger.info(pformat(cfg))
+
     maskRCNN = Generalized_RCNN()
 
     if args.cuda:
