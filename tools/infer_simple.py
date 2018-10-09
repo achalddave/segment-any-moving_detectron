@@ -41,6 +41,7 @@ import utils.misc as misc_utils
 import utils.net as net_utils
 import utils.vis as vis_utils
 from datasets import dataset_catalog
+from datasets.json_dataset import frame_offset
 from utils.blob import pack_sequence
 from utils.detectron_weight_helper import load_detectron_weight
 from utils.flow import load_flow_png
@@ -53,10 +54,42 @@ from visualize_pickle import visualize
 cv2.ocl.setUseOpenCL(False)
 
 
+def get_offset_images(images, offset):
+    if offset == 0:
+        return images
+
+    # Collect images for each sequence.
+    images_by_parent = collections.defaultdict(list)
+    for image in images:
+        images_by_parent[image.parent].append(image)
+
+    offset_map = {}  # Map original image to offset image
+    for sequence, frames in images_by_parent.items():
+        sorted_frames = natsorted(frames, alg=ns.PATH)
+        # Pad the beginning or ending of the sequence, then compute
+        # the list of frames at each offset.
+        if offset > 0:
+            # Pad the ending of the sequence.
+            offset_frames = sorted_frames + [
+                sorted_frames[-1] for _ in range(offset)
+            ]
+            offset_frames = offset_frames[offset:]
+        elif offset < 0:
+            # Pad the beginning of the sequence.
+            offset_frames = [
+                sorted_frames[0] for _ in range(-offset)
+            ] + sorted_frames
+            offset_frames = offset_frames[:offset]
+        assert len(sorted_frames) == len(offset_frames)
+        offset_map.update(zip(sorted_frames, offset_frames))
+
+    # Return offset images in the same order as the original images.
+    return [offset_map[image] for image in images]
+
+
 def parse_args():
     """Parse in command line arguments"""
     parser = argparse.ArgumentParser(description='Demonstrate mask-rcnn results')
-
     parser.add_argument(
         '--cfg', dest='cfg_file', required=True,
         help='optional config file')
@@ -230,27 +263,41 @@ def main():
     maskRCNN.eval()
 
     if args.image_dirs:
+        assert (len(args.image_dirs) == len(
+            cfg.DATA_LOADER.INPUT_FRAME_OFFSETS))
         image_dirs = [Path(x) for x in args.image_dirs]
 
         # Collect all images from each image dir.
         # all_images[i] contains a mapping from relative image paths to the
         # absolute image path for image_dirs[i].
         all_images = []
-        for image_dir in image_dirs:
+        for d, (image_dir, offset) in enumerate(
+                zip(image_dirs, cfg.DATA_LOADER.INPUT_FRAME_OFFSETS)):
             if args.recursive:
                 images = [x for x in image_dir.rglob('*') if is_image(x)]
             else:
                 images = [x for x in image_dir.iterdir() if is_image(x)]
+
             if not images:
                 error = f'Found no images in {image_dir}.'
                 if (not args.recursive
                         and any(x.is_dir() for x in image_dir.iterdir())):
                     error += ' Did you mean to specify --recursive?'
                 raise ValueError(error)
-            all_images.append({
-                x.relative_to(image_dir).with_suffix(''): x
-                for x in images
-            })
+
+            if offset == 0:
+                relative_to_absolute = {
+                    x.relative_to(image_dir).with_suffix(''): x
+                    for x in images
+                }
+            else:
+                offset_images = get_offset_images(images, offset)
+                relative_to_absolute = {
+                    image.relative_to(image_dir).with_suffix(''): offset_image
+                    for image, offset_image in zip(images, offset_images)
+                }
+
+            all_images.append(relative_to_absolute)
 
         all_relative_paths = [set(x.keys()) for x in all_images]
 
@@ -287,6 +334,17 @@ def main():
         else:
             vis_images = [x[0] for x in images]
     else:
+        assert len(cfg.DATA_LOADER.INPUT_FRAME_OFFSETS) == 0
+        # TODO(achald): Implement frame offsets for --images. This should be
+        # pretty easy, and should just involve adding
+        #   offset_images = get_offset_images(
+        #       images, cfg.DATA_LOADER.INPUT_FRAME_OFFSETS)
+        # Just make sure that the output_images and vis_images are aligned with
+        # the non-offset images. However, I don't have time to test this so I
+        # am not implementing it right now.
+        if cfg.DATA_LOADER.INPUT_FRAME_OFFSETS[0] != 0:
+            raise NotImplementedError(
+                "Frame offsets not implemented for --images")
         images = [(Path(x),) for x in args.images]
         output_images = [output_dir / (x[0].stem + '.png') for x in images]
         vis_images = [x[0] for x in images]
