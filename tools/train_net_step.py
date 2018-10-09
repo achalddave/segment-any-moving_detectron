@@ -467,6 +467,8 @@ def main():
         save_ckpt(output_dir, args, step, train_size, maskRCNN, optimizer)
 
     except (RuntimeError, KeyboardInterrupt):
+        logger.exception('Caught exception:')
+        logger.info('Deleting data iterator')
         del dataiterator
         logger.info('Save ckpt on exception ...')
         save_ckpt(output_dir, args, step, train_size, maskRCNN, optimizer)
