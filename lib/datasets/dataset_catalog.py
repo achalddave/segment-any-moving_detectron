@@ -314,6 +314,13 @@ DATASETS = {
         IMAGE_EXTENSION: '.jpg',
         IS_FLOW: False
     },
+    'davis_rgb_moving_val': {
+        IM_DIR: _DATA_DIR + '/davis/JPEGImages/',
+        ANN_FN: _DATA_DIR + '/davis/annotations/moving-val-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IMAGE_EXTENSION: '.jpg',
+        IS_FLOW: False
+    },
     'davis_rgb_moving_test': {
         IM_DIR: _DATA_DIR + '/davis/JPEGImages/',
         ANN_FN: _DATA_DIR + '/davis/annotations/moving-test-no-last-frame.json',
@@ -330,6 +337,12 @@ DATASETS = {
     'davis_hed_moving_trainval': {
         IM_DIR: _DATA_DIR + '/davis/hed/',
         ANN_FN: _DATA_DIR + '/davis/annotations/moving-trainval-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
+    },
+    'davis_hed_moving_val': {
+        IM_DIR: _DATA_DIR + '/davis/hed/',
+        ANN_FN: _DATA_DIR + '/davis/annotations/moving-val-no-last-frame.json',
         NUM_CLASSES: 2,
         IS_FLOW: False
     },
@@ -366,6 +379,12 @@ DATASETS = {
     'davis_flow_moving_trainval': {
         IM_DIR: _DATA_DIR + '/davis/liteflownet/',
         ANN_FN: _DATA_DIR + '/davis/annotations/moving-trainval-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    'davis_flow_moving_val': {
+        IM_DIR: _DATA_DIR + '/davis/liteflownet/',
+        ANN_FN: _DATA_DIR + '/davis/annotations/moving-val-no-last-frame.json',
         NUM_CLASSES: 2,
         IS_FLOW: True
     },
