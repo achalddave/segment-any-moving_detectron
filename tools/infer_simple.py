@@ -332,6 +332,10 @@ def main():
             vis_images = [(vis_image_dir / x).with_suffix(vis_extension)
                           for x in relative_paths]
         else:
+            if args.input_types[0] == 'flow':
+                raise ValueError(
+                    "About to visualize detections on flow images, this is "
+                    "likely not what you want.")
             vis_images = [x[0] for x in images]
     else:
         assert len(cfg.DATA_LOADER.INPUT_FRAME_OFFSETS) == 0
