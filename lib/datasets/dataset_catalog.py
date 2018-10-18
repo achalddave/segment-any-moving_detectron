@@ -240,6 +240,55 @@ DATASETS = {
         NUM_CLASSES: 2,
         IS_FLOW: True
     },
+    'flyingthings3d_flownet2_train': {
+        IM_DIR:
+            _DATA_DIR + '/flyingthings3d/flownet2/',
+        ANN_FN:
+            _DATA_DIR + '/flyingthings3d/annotations/train-without-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    'flyingthings3d_flownet2_test': {
+        IM_DIR:
+            _DATA_DIR + '/flyingthings3d/flownet2/',
+        ANN_FN:
+            _DATA_DIR + '/flyingthings3d/annotations/test-without-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    'flyingthings3d_flownet2-vis_train': {
+        IM_DIR:
+            _DATA_DIR + '/flyingthings3d/flownet2-vis/',
+        ANN_FN:
+            _DATA_DIR + '/flyingthings3d/annotations/train-without-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    'flyingthings3d_flownet2-vis_test': {
+        IM_DIR:
+            _DATA_DIR + '/flyingthings3d/flownet2-vis/',
+        ANN_FN:
+            _DATA_DIR + '/flyingthings3d/annotations/test-without-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    # Flownet2 trained on FlyingChairs and FlyingThings3D only.
+    'flyingthings3d_flownet2_chairsthings_train': {
+        IM_DIR:
+            _DATA_DIR + '/flyingthings3d/flownet2_chairsthings/',
+        ANN_FN:
+            _DATA_DIR + '/flyingthings3d/annotations/train-without-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    'flyingthings3d_flownet2_chairsthings_test': {
+        IM_DIR:
+            _DATA_DIR + '/flyingthings3d/flownet2_chairsthings/',
+        ANN_FN:
+            _DATA_DIR + '/flyingthings3d/annotations/test-without-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
     'fbms_rgb_train': {
         IM_DIR: _DATA_DIR + '/fbms/highres/rgb/',
         ANN_FN: _DATA_DIR + '/fbms/annotations/train-without-last-frame.json',
