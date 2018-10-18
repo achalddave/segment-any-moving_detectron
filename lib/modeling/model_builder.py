@@ -79,12 +79,17 @@ class Generalized_RCNN(nn.Module):
 
         # Backbone for feature extraction
         conv_body_fn = get_func(cfg.MODEL.CONV_BODY)
+        conv_body_kwargs = {}
         if issubclass(conv_body_fn, body_muxer.BodyMuxer):
-            conv_bodies = [get_func(x) for x in cfg.MODEL.CONV_MUXER_BODIES]
-            self.Conv_Body = conv_body_fn(
-                conv_bodies, cfg.MODEL.CONV_MUXER_INPUTS)
-        else:
-            self.Conv_Body = conv_body_fn()
+            conv_body_kwargs['conv_bodies'] = [
+                get_func(x) for x in cfg.MODEL.CONV_MUXER_BODIES
+            ]
+            conv_body_kwargs['conv_body_inputs'] = cfg.MODEL.CONV_MUXER_INPUTS
+            if issubclass(conv_body_fn, body_muxer.BodyMuxer_ConcatenateAdapt):
+                conv_body_kwargs['adaptor_name'] = (
+                    cfg.MODEL.CONV_MUXER_CONCATENATE_ADAPT_FN)
+
+        self.Conv_Body = conv_body_fn(**conv_body_kwargs)
 
         # Region Proposal Network
         if cfg.RPN.RPN_ON:
@@ -139,8 +144,18 @@ class Generalized_RCNN(nn.Module):
             if cfg.MODEL.KEYPOINTS_ON and getattr(self.Keypoint_Head, 'SHARE_RES5', False):
                 assert compare_state_dict(self.Keypoint_Head.res5.state_dict(), self.Box_Head.res5.state_dict())
 
-        if cfg.TRAIN.FREEZE_CONV_BODY:
-            for p in self.Conv_Body.parameters():
+        module_names = set(y[0] for y in self.named_modules())
+        unknown_frozen_modules = (cfg.TRAIN.FREEZE_SUBMODULES - module_names)
+        if unknown_frozen_modules:
+            raise ValueError('Unknown modules in TRAIN.FREEZE_SUBMODULES: %s' %
+                             list(unknown_frozen_modules))
+
+        for name in cfg.TRAIN.FREEZE_SUBMODULES:
+            child_module = self
+            for part in name.split('.'):
+                child_module = child_module._modules[part]
+            logging.info('Freezing Generalized_RCNN submodule: %s' % name)
+            for p in child_module.parameters():
                 p.requires_grad = False
 
     def forward(self, data, im_info, roidb=None, **rpn_kwargs):

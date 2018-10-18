@@ -165,9 +165,20 @@ __C.TRAIN.CROWD_FILTER_THRESH = 0.7
 # Ignore ground-truth objects with area < this threshold
 __C.TRAIN.GT_MIN_AREA = -1
 
-# Freeze the backbone architecture during training if set to True
+# DEPRECATED: Use FREEZE_SUBMODULES instead.
 __C.TRAIN.FREEZE_CONV_BODY = False
 
+# Valid values are any modules in Generalized_RCNN. The most commonly used ones
+# are:
+#   - Conv_Body
+#   - RPN
+#   - Box_Head
+#   - Box_Outs
+#   - Mask_Head
+#   - Mask_Outs
+#   - Keypoint_Head
+#   - Keypoint_Outs
+__C.TRAIN.FREEZE_SUBMODULES = set({})
 
 # ---------------------------------------------------------------------------- #
 # Data loader options
@@ -1082,6 +1093,11 @@ def assert_and_infer_cfg(make_immutable=True):
         init.normal_ = init.normal
         init.constant_ = init.constant
         nn.GroupNorm = mynn.GroupNorm
+    if __C.TRAIN.FREEZE_CONV_BODY:
+        logging.warn('Key TRAIN.FREEZE_CONV_BODY is deprecated, use '
+                     'TRAIN.FREEZE_SUBMODULES instead')
+        del __C.TRAIN['FREEZE_CONV_BODY']
+        __C.TRAIN.FREEZE_SUBMODULES.add('Conv_Body')
     if isinstance(cfg.PIXEL_MEANS, list):
         cfg.PIXEL_MEANS = np.concatenate(cfg.PIXEL_MEANS, axis=-1)
 
@@ -1112,6 +1128,7 @@ def merge_cfg_from_list(cfg_list):
         if _key_is_deprecated(full_key):
             logging.info('Ignoring deprecated key: %s' % full_key)
             continue
+
         # if _key_is_renamed(full_key):
         #     _raise_key_rename_error(full_key)
         key_list = full_key.split('.')
@@ -1216,6 +1233,8 @@ def _check_and_coerce_cfg_value_type(value_a, value_b, key, full_key):
         value_a = list(value_a)
     elif isinstance(value_a, list) and isinstance(value_b, tuple):
         value_a = tuple(value_a)
+    elif isinstance(value_a, list) and isinstance(value_b, set):
+        value_a = set(value_a)
     elif full_key == 'FPN.RPN_COLLECT_SCALE':
         # For some reason, the RPN_COLLECT_SCALE defaults to a float when
         # dumped to YAML and re-loaded, so we try to update it to be an int.
