@@ -262,7 +262,7 @@ DATASETS = {
         ANN_FN:
             _DATA_DIR + '/flyingthings3d/annotations/train-without-last-frame.json',
         NUM_CLASSES: 2,
-        IS_FLOW: True
+        IS_FLOW: False
     },
     'flyingthings3d_flownet2-vis_test': {
         IM_DIR:
@@ -270,7 +270,7 @@ DATASETS = {
         ANN_FN:
             _DATA_DIR + '/flyingthings3d/annotations/test-without-last-frame.json',
         NUM_CLASSES: 2,
-        IS_FLOW: True
+        IS_FLOW: False
     },
     # Flownet2 trained on FlyingChairs and FlyingThings3D only.
     'flyingthings3d_flownet2_chairsthings_train': {
