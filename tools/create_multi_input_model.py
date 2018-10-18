@@ -45,6 +45,15 @@ def main():
     parser.add_argument('--output-model', required=True)
     parser.add_argument(
         '--num-classes', type=int, default=2)
+    parser.add_argument(
+        '--bodymuxer-concatenateconv-init',
+        default='random',
+        help=('How to initialize the conv in BodyMuxer_ConcatenateConv. '
+              'Options are: "random" (random init), "head" (initialize to '
+              'select the --head-weights-index), or an integer specifying '
+              'which body\'s weights to select. Ignored if '
+              'cfg.MODEL.CONV_BODY is not '
+              'body_muxer.BodyMuxer_ConcatenateConv'))
 
     args = parser.parse_args()
 
@@ -78,10 +87,28 @@ def main():
                 model._modules[child].load_state_dict(child_state_dict)
 
     if isinstance(model.Conv_Body, body_muxer.BodyMuxer_ConcatenateConv):
-        logging.info(
-            'Initializing BodyMuxer_ConcatenateConv.conv to select '
-            'RPN features from body %s directly.' % args.head_weights_index)
-        model.Conv_Body.init_conv_select_index_(args.head_weights_index)
+        conv_init = args.bodymuxer_concatenateconv_init
+        if conv_init == 'head':
+            conv_init = args.head_weights_index
+        else:
+            try:
+                conv_init = int(conv_init)
+            except ValueError:
+                pass
+
+        if isinstance(conv_init, int):
+            logging.info(
+                'Initializing BodyMuxer_ConcatenateConv.conv to select '
+                'RPN features from body %s directly.' %
+                conv_init)
+            model.Conv_Body.init_conv_select_index_(conv_init)
+        elif conv_init == 'random':
+            logging.info(
+                'Leaving BodyMuxer_ConcatenateConv conv at default random '
+                'init.')
+        elif conv_init != 'random':
+            raise ValueError(
+                'Unknown --bodymuxer-concatenateconv-init: %s' % conv_init)
 
     # The actual model state dict needs to be stored in a dictionary with
     # 'model' as the key for train_net_step.py, test_net.py, etc.
