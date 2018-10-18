@@ -455,6 +455,12 @@ DATASETS = {
         NUM_CLASSES: 2,
         IS_FLOW: True
     },
+    'davis_flownet2_flow_moving_val': {
+        IM_DIR: _DATA_DIR + '/davis/flownet2/',
+        ANN_FN: _DATA_DIR + '/davis/annotations/moving-val-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
     'davis_flownet2_flow_moving_test': {
         IM_DIR: _DATA_DIR + '/davis/flownet2/',
         ANN_FN: _DATA_DIR + '/davis/annotations/moving-test-no-last-frame.json',
