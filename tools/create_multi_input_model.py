@@ -8,6 +8,7 @@ containing a BodyMuxer with a conv body from each of the checkpoints.
 import argparse
 import collections
 import logging
+import pprint
 import textwrap
 
 import torch
@@ -55,7 +56,7 @@ def main():
 
     setup_logging(args.output_model + '.log')
 
-    logging.info('Args: %s' % vars(args))
+    logging.info('Args: %s' % pprint.pformat(vars(args)))
     for i, checkpoint_path in enumerate(args.body_checkpoints):
         checkpoint = torch.load(checkpoint_path)['model']
         body_state_dict = {
