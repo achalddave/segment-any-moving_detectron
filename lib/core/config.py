@@ -437,6 +437,9 @@ __C.MODEL.CONV_BODY = ''
 # Conv body to use for each of the inputs.
 __C.MODEL.CONV_MUXER_BODIES = ()
 
+# Adaptation function to use for BodyMuxer_ConcatenateAdapt
+__C.MODEL.CONV_MUXER_CONCATENATE_ADAPT_FN = ''
+
 # List of length len(MODEL.CONV_MUXER_BODIES). Each element is a list of
 # indices indicating which inputs to pass to each body.
 __C.MODEL.CONV_MUXER_INPUTS = ((), )

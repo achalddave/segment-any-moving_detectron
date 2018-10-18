@@ -189,6 +189,47 @@ class BodyMuxer_ConcatenateConv(BodyMuxer_Concatenate):
         self.conv.bias.data.zero_()
 
 
+class BodyMuxer_ConcatenateAdapt(BodyMuxer_Concatenate):
+    def __init__(self,
+                 conv_bodies,
+                 conv_body_inputs,
+                 adaptor_name,
+                 output_channels=None):
+        super().__init__(conv_bodies, conv_body_inputs)
+        self.adaptor_name = adaptor_name
+        try:
+            self.adaptor_fn = getattr(BodyMuxer_ConcatenateAdapt, adaptor_name)
+            if not callable(self.adaptor_fn):
+                raise AttributeError
+        except AttributeError:
+            # Caught AttributeError either because of getattr or because not
+            # callable
+            raise ValueError('Unknown adaptation function: %s' % adaptor_name)
+
+        input_channels = sum(x.dim_out for x in self.bodies)
+        if output_channels is None:
+            output_channels = self.bodies[0].dim_out
+        self.adaptor = self.adaptor_fn(input_channels, output_channels)
+        self.dim_out = output_channels
+
+    def _merge(self, outputs):
+        concatenated = super()._merge(outputs)
+        return self.adaptor(concatenated)
+
+    @staticmethod
+    def adapt_3convs3x3(dim_in, dim_out):
+        return BodyMuxer_ConcatenateAdapt.get_Xconvs3x3(dim_in, dim_out, 3)
+
+    @staticmethod
+    def get_Xconvs3x3(dim_in, dim_out, num_convs):
+        module_list = []
+        for i in range(num_convs):
+            module_list.extend((nn.Conv2d(dim_in, dim_out, 3, 1, padding=1),
+                                nn.ReLU(inplace=True)))
+            dim_in = dim_out
+        return nn.Sequential(*module_list)
+
+
 class BodyMuxer_Difference(BodyMuxer):
     """Use a single backbone on all inputs and output consecutive differences.
 
