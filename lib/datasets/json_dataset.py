@@ -81,7 +81,8 @@ def load_image_path(path, dataset_name):
         # that this image is loaded in BGR format because of OpenCV.
         return load_flow_png(path)
     else:
-        assert 'flow_vis' in dataset_name or 'flow' not in dataset_name
+        assert ('flow' not in dataset_name or
+                ('flownet2_vis' in dataset_name or 'flow_vis' in dataset_name))
         return cv2.imread(path)
 
 
