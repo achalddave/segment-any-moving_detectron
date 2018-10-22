@@ -127,6 +127,7 @@ def parse_args():
         '--vis_image_dir',
         help=('Images to use for visualization. Useful, e.g., when inferring '
               'on one modality (flow) but visualizing on another (RGB).'))
+    parser.add_argument('--vis_threshold', default=0.7, type=float)
     parser.add_argument('--vis_num_workers', default=4, type=int)
 
     parser.add_argument(
@@ -422,7 +423,7 @@ def main():
                     pickle_data_or_path=data,
                     output_path=out_image,
                     dataset=dataset,
-                    thresh=0.7),
+                    thresh=args.vis_threshold),
                 callback=visualization_callback,
                 error_callback=visualization_error)
 
