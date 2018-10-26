@@ -535,6 +535,18 @@ DATASETS = {
         NUM_CLASSES: 2,
         IS_FLOW: False
     },
+    'davis_flownet2_vis_moving_train': {
+        IM_DIR: _DATA_DIR + '/davis/flownet2-vis/',
+        ANN_FN: _DATA_DIR + '/davis/annotations/moving-train-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
+    },
+    'davis_flownet2_vis_moving_val': {
+        IM_DIR: _DATA_DIR + '/davis/flownet2-vis/',
+        ANN_FN: _DATA_DIR + '/davis/annotations/moving-val-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
+    },
     'davis_flownet2_vis_moving_test': {
         IM_DIR: _DATA_DIR + '/davis/flownet2-vis/',
         ANN_FN: _DATA_DIR + '/davis/annotations/moving-test-no-last-frame.json',
