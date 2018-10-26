@@ -256,7 +256,7 @@ DATASETS = {
         NUM_CLASSES: 2,
         IS_FLOW: True
     },
-    'flyingthings3d_flownet2-vis_train': {
+    'flyingthings3d_flownet2_vis_train': {
         IM_DIR:
             _DATA_DIR + '/flyingthings3d/flownet2-vis/',
         ANN_FN:
@@ -264,7 +264,7 @@ DATASETS = {
         NUM_CLASSES: 2,
         IS_FLOW: False
     },
-    'flyingthings3d_flownet2-vis_test': {
+    'flyingthings3d_flownet2_vis_test': {
         IM_DIR:
             _DATA_DIR + '/flyingthings3d/flownet2-vis/',
         ANN_FN:
