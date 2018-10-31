@@ -46,7 +46,11 @@ def main():
     parser = argparse.ArgumentParser(
         description=__doc__.split('\n')[0] if __doc__ else '',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--coco-eval-pickle', required=True)
+    parser.add_argument(
+        '--coco-eval-pickle',
+        help=("Pickle file containing a COCOEval object; usually "
+              "'detection_results.pkl', or 'segmentation_results.pkl'."),
+        required=True)
     parser.add_argument('--output-log', required=True)
 
     args = parser.parse_args()
