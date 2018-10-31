@@ -479,6 +479,18 @@ DATASETS = {
         NUM_CLASSES: 2,
         IS_FLOW: True
     },
+    'davis16_flownet2_train': {
+        IM_DIR: _DATA_DIR + '/davis/flownet2/',
+        ANN_FN: _DATA_DIR + '/davis16/annotations/train-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    'davis16_flownet2_val': {
+        IM_DIR: _DATA_DIR + '/davis/flownet2/',
+        ANN_FN: _DATA_DIR + '/davis16/annotations/val-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
     'davis16_rgb_train': {
         IM_DIR: _DATA_DIR + '/davis16/JPEGImages/',
         ANN_FN: _DATA_DIR + '/davis16/annotations/train-no-last-frame_jpg-extension.json',
