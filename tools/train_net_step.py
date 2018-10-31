@@ -192,6 +192,7 @@ def main():
         file_logger = logging.getLogger(__name__)
     logger = logging.getLogger(__name__)
 
+    file_logger.info('sys.argv:\npython %s', ' '.join(sys.argv))
     file_logger.info('Args: %s', pprint.pformat(orig_args))
     file_logger.info('Config: %s', pprint.pformat(cfg))
     file_logger.info('Experiment id: %s', experiment_id)
