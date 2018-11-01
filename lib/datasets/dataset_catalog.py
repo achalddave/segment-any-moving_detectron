@@ -202,7 +202,7 @@ DATASETS = {
     },
     'flyingthings3d_gtflow_train': {
         IM_DIR:
-            _DATA_DIR + '/flyingthings3d/gt_flow_images/',
+            _DATA_DIR + '/flyingthings3d/gt_flow/',
         ANN_FN:
             _DATA_DIR + '/flyingthings3d/annotations/train-without-last-frame.json',
         NUM_CLASSES: 2,
@@ -210,7 +210,7 @@ DATASETS = {
     },
     'flyingthings3d_gtflow_test': {
         IM_DIR:
-            _DATA_DIR + '/flyingthings3d/gt_flow_images/',
+            _DATA_DIR + '/flyingthings3d/gt_flow/',
         ANN_FN:
             _DATA_DIR + '/flyingthings3d/annotations/test-without-last-frame.json',
         NUM_CLASSES: 2,
@@ -218,7 +218,7 @@ DATASETS = {
     },
     'flyingthings3d_gtflow_3369_subset_train': {
         IM_DIR:
-            _DATA_DIR + '/flyingthings3d/gt_flow_images/',
+            _DATA_DIR + '/flyingthings3d/gt_flow/',
         ANN_FN:
             _DATA_DIR + '/flyingthings3d/annotations/train-without-last-frame_subset-3369.json',
         NUM_CLASSES: 2,
