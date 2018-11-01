@@ -493,14 +493,16 @@ DATASETS = {
     },
     'davis16_rgb_train': {
         IM_DIR: _DATA_DIR + '/davis16/JPEGImages/',
-        ANN_FN: _DATA_DIR + '/davis16/annotations/train-no-last-frame_jpg-extension.json',
+        ANN_FN: _DATA_DIR + '/davis16/annotations/train-no-last-frame.json',
         NUM_CLASSES: 2,
+        IMAGE_EXTENSION: '.jpg',
         IS_FLOW: False
     },
     'davis16_rgb_val': {
         IM_DIR: _DATA_DIR + '/davis16/JPEGImages/',
-        ANN_FN: _DATA_DIR + '/davis16/annotations/val-no-last-frame_jpg-extension.json',
+        ANN_FN: _DATA_DIR + '/davis16/annotations/val-no-last-frame.json',
         NUM_CLASSES: 2,
+        IMAGE_EXTENSION: '.jpg',
         IS_FLOW: False
     },
     # The "moving" splits for DAVIS 16 contain all the videos from DAVIS 16,
@@ -519,13 +521,15 @@ DATASETS = {
     },
     'davis16_rgb_moving_train': {
         IM_DIR: _DATA_DIR + '/davis16/JPEGImages/',
-        ANN_FN: _DATA_DIR + '/davis16/moving-annotations/train-no-last-frame_jpg-extension.json',
+        ANN_FN: _DATA_DIR + '/davis16/moving-annotations/train-no-last-frame.json',
+        IMAGE_EXTENSION: '.jpg',
         NUM_CLASSES: 2,
         IS_FLOW: False
     },
     'davis16_rgb_moving_test': {
         IM_DIR: _DATA_DIR + '/davis16/JPEGImages/',
-        ANN_FN: _DATA_DIR + '/davis16/moving-annotations/test-no-last-frame_jpg-extension.json',
+        ANN_FN: _DATA_DIR + '/davis16/moving-annotations/test-no-last-frame.json',
+        IMAGE_EXTENSION: '.jpg',
         NUM_CLASSES: 2,
         IS_FLOW: False
     },
