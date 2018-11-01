@@ -605,6 +605,19 @@ DATASETS = {
         NUM_CLASSES: 2,
         IS_FLOW: True
     },
+    'davis_rgb_moving_without_davis16_all': {
+        IM_DIR: _DATA_DIR + '/davis/JPEGImages/',
+        ANN_FN: _DATA_DIR + '/davis/annotations-without-davis16/moving-without-davis16-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False,
+        IMAGE_EXTENSION: '.jpg'
+    },
+    'davis_flownet2_moving_without_davis16_all': {
+        IM_DIR: _DATA_DIR + '/davis/flownet2/',
+        ANN_FN: _DATA_DIR + '/davis/annotations-without-davis16/moving-without-davis16-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
     'ytvos_rgb_sub_train_8-21-18': {
         IM_DIR: _DATA_DIR + '/ytvos/rgb/train',
         ANN_FN: _DATA_DIR + '/ytvos/train-splits/sub-train-no-last-frame.json',
