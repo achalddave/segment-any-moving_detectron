@@ -386,7 +386,9 @@ def main():
         image_list = []
         for is_flow, image_path in zip(input_is_flow, image_paths):
             if is_flow:
-                im = load_flow_png(str(image_path))
+                im = load_flow_png(
+                    str(image_path),
+                    cfg.DATA_LOADER.FLOW.LOW_MAGNITUDE_THRESHOLD)
             else:
                 im = cv2.imread(str(image_path))
             assert im is not None

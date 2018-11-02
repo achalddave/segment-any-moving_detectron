@@ -197,6 +197,10 @@ __C.DATA_LOADER.NUM_INPUTS = 1
 # sequence of frames for each of the inputs.
 __C.DATA_LOADER.INPUT_FRAME_OFFSETS = [0]
 
+__C.DATA_LOADER.FLOW = AttrDict()
+# Smooth out angles when the magnitude is below this value.
+__C.DATA_LOADER.FLOW.LOW_MAGNITUDE_THRESHOLD = 0.0
+
 # ---------------------------------------------------------------------------- #
 # Inference ('test') options
 # ---------------------------------------------------------------------------- #

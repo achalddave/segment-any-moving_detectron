@@ -1,10 +1,11 @@
 import cv2
 import logging
-
 from pathlib import Path
 
+import numpy as np
 
-def load_flow_png(png_path):
+
+def load_flow_png(png_path, low_magnitude_threshold=0):
     # R channel contains angle, G channel contains magnitude. Note that
     # this image is loaded in BGR format because of OpenCV.
     try:
@@ -26,6 +27,10 @@ def load_flow_png(png_path):
     image[:, :, 1] = ((image[:, :, 1] / 255) * (magnitude_max - magnitude_min)
                       + magnitude_min)
     height, width = image.shape[:2]
+
+    if low_magnitude_threshold != 0:
+        low_magnitudes = np.abs(image[:, :, 1]) < low_magnitude_threshold
+        image[:, :, 2][low_magnitudes] = 0
 
     # Largest possible flow vector
     diagonal = (height ** 2 + width ** 2) ** 0.5

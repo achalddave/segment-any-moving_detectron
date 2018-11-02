@@ -79,7 +79,8 @@ def load_image_path(path, dataset_name):
     if DATASETS[dataset_name][IS_FLOW]:
         # R channel contains angle, G channel contains magnitude. Note
         # that this image is loaded in BGR format because of OpenCV.
-        return load_flow_png(path)
+        return load_flow_png(path,
+                             cfg.DATA_LOADER.FLOW.LOW_MAGNITUDE_THRESHOLD)
     else:
         assert ('flow' not in dataset_name or
                 ('flownet2_vis' in dataset_name or 'flow_vis' in dataset_name))
