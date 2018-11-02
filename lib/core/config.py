@@ -665,6 +665,19 @@ __C.FAST_RCNN = AttrDict()
 # (e.g., 'head_builder.add_roi_2mlp_head' to specify a two hidden layer MLP)
 __C.FAST_RCNN.ROI_BOX_HEAD = ''
 
+# Indicates which of the MODEL.CONV_BODY outputs to use as input to the box
+# head. This is intended for when DATA_LOADER.NUM_INPUTS > 1, and
+# MODEL.CONV_BODY is a BodyMuxer. A BodyMuxer generally outputs a list, where
+# the first k elements are the outputs of each of the k individual bodies
+# (where k = DATA_LOADER.NUM_INPUTS), and the last element is some concatenated
+# / merged representation of each of the outputs.
+#
+# One use case: When training two-stream Mask RCNN with an RGB and a flow
+# branch, set FAST_RCNN.INPUT_INDEX and RPN.INPUT_INDEX to -1,
+# so that they both use the merged RGB+Flow RPN features, but set
+# MRCNN.INPUT_INDEX to 0 to use only the RGB branch for mask prediction.
+__C.FAST_RCNN.INPUT_INDEX = -1
+
 # Hidden layer dimension when using an MLP for the RoI box head
 __C.FAST_RCNN.MLP_HEAD_DIM = 1024
 
@@ -695,6 +708,10 @@ __C.RPN = AttrDict()
 # [Infered value; do not set directly in a config]
 # Indicates that the model contains an RPN subnetwork
 __C.RPN.RPN_ON = False
+
+# Indicates which of the MODEL.CONV_BODY outputs to use as input to the RPN.
+# See FAST_RCNN.BOX_HEAD_INPUT_INDEX for more info.
+__C.RPN.INPUT_INDEX = -1
 
 # `True` for Detectron implementation. `False` for jwyang's implementation.
 __C.RPN.OUT_DIM_AS_IN_DIM = True
@@ -782,6 +799,10 @@ __C.MRCNN = AttrDict()
 # (e.g., 'mask_rcnn_heads.ResNet_mask_rcnn_fcn_head_v1up4convs')
 __C.MRCNN.ROI_MASK_HEAD = ''
 
+# Indicates which of the MODEL.CONV_BODY outputs to use as input to the mask
+# head. See FAST_RCNN.BOX_HEAD_INPUT_INDEX for more info.
+__C.MRCNN.INPUT_INDEX = -1
+
 # Resolution of mask predictions
 __C.MRCNN.RESOLUTION = 14
 
@@ -832,6 +853,10 @@ __C.KRCNN = AttrDict()
 # The string must match a function this is imported in modeling.model_builder
 # (e.g., 'keypoint_rcnn_heads.add_roi_pose_head_v1convX')
 __C.KRCNN.ROI_KEYPOINTS_HEAD = ''
+
+# Indicates which of the MODEL.CONV_BODY outputs to use as input to the
+# keypoints head. See FAST_RCNN.BOX_HEAD_INPUT_INDEX for more info.
+__C.KRCNN.INPUT_INDEX = -1
 
 # Output size (and size loss is computed on), e.g., 56x56
 __C.KRCNN.HEATMAP_SIZE = -1

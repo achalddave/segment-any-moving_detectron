@@ -40,6 +40,13 @@ class BodyMuxer(nn.Module, abc.ABC):
         # indicating the inputs to pass to the corresponding conv_body.
         self.body_channels = self._inputs_to_channels(conv_body_inputs)
         self.mapping_to_detectron = None
+        self.merged_dim_out = None
+        self.bodies_dim_out = [b.dim_out for b in self.bodies]
+
+    @property
+    def dim_out(self):
+        assert self.merged_dim_out is not None
+        return self.bodies_dim_out + [self.merged_dim_out]
 
     @staticmethod
     def _inputs_to_channels(inputs):
@@ -111,13 +118,13 @@ class BodyMuxer(nn.Module, abc.ABC):
             ]
         else:
             concatenated_outputs = self._merge(outputs)
-        return concatenated_outputs
+        return outputs + [concatenated_outputs]
 
 
 class BodyMuxer_Average(BodyMuxer):
     def __init__(self, conv_bodies, conv_body_inputs):
         super().__init__(conv_bodies, conv_body_inputs)
-        self.dim_out = self.bodies[0].dim_out
+        self.merged_dim_out = self.bodies[0].dim_out
 
     def _merge(self, outputs):
         """
@@ -133,7 +140,7 @@ class BodyMuxer_Average(BodyMuxer):
 class BodyMuxer_Concatenate(BodyMuxer):
     def __init__(self, conv_bodies, conv_body_inputs):
         super().__init__(conv_bodies, conv_body_inputs)
-        self.dim_out = sum(body.dim_out for body in self.bodies)
+        self.merged_dim_out = sum(body.dim_out for body in self.bodies)
 
     def _merge(self, outputs):
         """
@@ -155,7 +162,7 @@ class BodyMuxer_ConcatenateConv(BodyMuxer_Concatenate):
         input_channels = sum(x.dim_out for x in self.bodies)
         self.conv = nn.Conv2d(
             input_channels, output_channels, kernel_size=3, padding=1)
-        self.dim_out = output_channels
+        self.merged_dim_out = output_channels
 
     def _merge(self, outputs):
         concatenated = super()._merge(outputs)
@@ -164,7 +171,7 @@ class BodyMuxer_ConcatenateConv(BodyMuxer_Concatenate):
     def init_conv_select_index_(self, body_index):
         """Initialize conv to select the outputs of a specific body."""
         body = self.bodies[body_index]
-        assert self.dim_out == body.dim_out
+        assert self.merged_dim_out == body.dim_out
 
         # Input channel start_index corresponding to outputs of the specified
         # body's outputs.
@@ -210,7 +217,7 @@ class BodyMuxer_ConcatenateAdapt(BodyMuxer_Concatenate):
         if output_channels is None:
             output_channels = self.bodies[0].dim_out
         self.adaptor = self.adaptor_fn(input_channels, output_channels)
-        self.dim_out = output_channels
+        self.merged_dim_out = output_channels
 
     def _merge(self, outputs):
         concatenated = super()._merge(outputs)
@@ -247,7 +254,7 @@ class BodyMuxer_Difference(BodyMuxer):
         )
         nn.Module.__init__(self)
         self.body = conv_bodies[0]()
-        self.dim_out = self.body.dim_out * (len(conv_body_inputs) - 1)
+        self.merged_dim_out = self.body.dim_out * (len(conv_body_inputs) - 1)
         self.spatial_scale = self.body.spatial_scale
         self.body_channels = self._inputs_to_channels(conv_body_inputs)
 
@@ -295,7 +302,8 @@ class BodyMuxer_Difference(BodyMuxer):
                          '[Likely an implementation bug] Shapes of outputs do '
                          'not match: ')
         output = torch.cat(outputs, dim=1)
-        return output[:, self.dim_out:] - output[:, :-self.dim_out]
+        return (
+            output[:, self.merged_dim_out:] - output[:, :-self.merged_dim_out])
 
     def forward(self, inputs):
         """
@@ -324,7 +332,7 @@ class BodyMuxer_Difference(BodyMuxer):
             ]
         else:
             concatenated_outputs = self._merge(outputs)
-        return concatenated_outputs
+        return outputs + [concatenated_outputs]
 
 
 class BodyMuxer_DifferenceConcatenateConv(BodyMuxer_Difference):
@@ -339,10 +347,10 @@ class BodyMuxer_DifferenceConcatenateConv(BodyMuxer_Difference):
     """
     def __init__(self, conv_bodies, conv_body_inputs):
         super().__init__(conv_bodies, conv_body_inputs)
-        self.dim_out = self.body.dim_out
+        self.merged_dim_out = self.body.dim_out
         input_channels = self.body.dim_out * len(conv_body_inputs)
         self.conv = nn.Conv2d(
-            input_channels, self.dim_out, kernel_size=3, padding=1)
+            input_channels, self.merged_dim_out, kernel_size=3, padding=1)
 
     def _merge(self, outputs):
         """
@@ -360,7 +368,8 @@ class BodyMuxer_DifferenceConcatenateConv(BodyMuxer_Difference):
                          '[Likely an implementation bug] Shapes of outputs do '
                          'not match: ')
         output = torch.cat(outputs, dim=1)
-        first_output = output[:, :self.dim_out]
-        differences = output[:, self.dim_out:] - output[:, :-self.dim_out]
+        first_output = output[:, :self.merged_dim_out]
+        differences = (
+            output[:, self.merged_dim_out:] - output[:, :-self.merged_dim_out])
         output = torch.cat([first_output, differences], dim=1)
         return self.conv(output)

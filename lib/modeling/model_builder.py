@@ -91,10 +91,15 @@ class Generalized_RCNN(nn.Module):
 
         self.Conv_Body = conv_body_fn(**conv_body_kwargs)
 
+        Conv_Body_dim_outs = self.Conv_Body.dim_out
+        if not isinstance(Conv_Body_dim_outs, list):
+            Conv_Body_dim_outs = [Conv_Body_dim_outs]
+
         # Region Proposal Network
         if cfg.RPN.RPN_ON:
             self.RPN = rpn_heads.generic_rpn_outputs(
-                self.Conv_Body.dim_out, self.Conv_Body.spatial_scale)
+                Conv_Body_dim_outs[cfg.RPN.INPUT_INDEX],
+                self.Conv_Body.spatial_scale)
 
         if cfg.FPN.FPN_ON:
             # Only supports case when RPN and ROI min levels are the same
@@ -113,23 +118,34 @@ class Generalized_RCNN(nn.Module):
         # BBOX Branch
         if not cfg.MODEL.RPN_ONLY:
             self.Box_Head = get_func(cfg.FAST_RCNN.ROI_BOX_HEAD)(
-                self.RPN.dim_out, self.roi_feature_transform, self.Conv_Body.spatial_scale)
+                Conv_Body_dim_outs[cfg.FAST_RCNN.INPUT_INDEX],
+                self.roi_feature_transform, self.Conv_Body.spatial_scale)
             self.Box_Outs = fast_rcnn_heads.fast_rcnn_outputs(
                 self.Box_Head.dim_out)
 
         # Mask Branch
         if cfg.MODEL.MASK_ON:
             self.Mask_Head = get_func(cfg.MRCNN.ROI_MASK_HEAD)(
-                self.RPN.dim_out, self.roi_feature_transform, self.Conv_Body.spatial_scale)
+                Conv_Body_dim_outs[cfg.MRCNN.INPUT_INDEX],
+                self.roi_feature_transform, self.Conv_Body.spatial_scale)
             if getattr(self.Mask_Head, 'SHARE_RES5', False):
+                assert (cfg.FAST_RCNN.INPUT_INDEX == cfg.MRCNN.INPUT_INDEX), (
+                    'SHARE_RES5 is enabled, but box and mask head input '
+                    'indices do not match (%s vs %s).' %
+                    (cfg.FAST_RCNN.INPUT_INDEX, cfg.MRCNN.INPUT_INDEX))
                 self.Mask_Head.share_res5_module(self.Box_Head.res5)
             self.Mask_Outs = mask_rcnn_heads.mask_rcnn_outputs(self.Mask_Head.dim_out)
 
         # Keypoints Branch
         if cfg.MODEL.KEYPOINTS_ON:
             self.Keypoint_Head = get_func(cfg.KRCNN.ROI_KEYPOINTS_HEAD)(
-                self.RPN.dim_out, self.roi_feature_transform, self.Conv_Body.spatial_scale)
+                Conv_Body_dim_outs[cfg.MRCNN.INPUT_INDEX],
+                self.roi_feature_transform, self.Conv_Body.spatial_scale)
             if getattr(self.Keypoint_Head, 'SHARE_RES5', False):
+                assert (cfg.FAST_RCNN.INPUT_INDEX == cfg.KRCNN.INPUT_INDEX), (
+                    'SHARE_RES5 is enabled, but box and mask head input '
+                    'indices do not match (%s vs %s).' %
+                    (cfg.FAST_RCNN.INPUT_INDEX, cfg.KRCNN.INPUT_INDEX))
                 self.Keypoint_Head.share_res5_module(self.Box_Head.res5)
             self.Keypoint_Outs = keypoint_rcnn_heads.keypoint_outputs(self.Keypoint_Head.dim_out)
 
@@ -175,8 +191,10 @@ class Generalized_RCNN(nn.Module):
         return_dict = {}  # A dict to collect return variables
 
         blob_conv = self.Conv_Body(im_data)
+        if not isinstance(self.Conv_Body, body_muxer.BodyMuxer):
+            blob_conv = [blob_conv]
 
-        rpn_ret = self.RPN(blob_conv, im_info, roidb)
+        rpn_ret = self.RPN(blob_conv[cfg.RPN.INPUT_INDEX], im_info, roidb)
 
         # if self.training:
         #     # can be used to infer fg/bg ratio
@@ -185,16 +203,18 @@ class Generalized_RCNN(nn.Module):
         if cfg.FPN.FPN_ON:
             # Retain only the blobs that will be used for RoI heads. `blob_conv` may include
             # extra blobs that are used for RPN proposals, but not for RoI heads.
-            blob_conv = blob_conv[-self.num_roi_levels:]
+            blob_conv = [output[-self.num_roi_levels:] for output in blob_conv]
 
         if not self.training:
             return_dict['blob_conv'] = blob_conv
 
         if not cfg.MODEL.RPN_ONLY:
             if cfg.MODEL.SHARE_RES5 and self.training:
-                box_feat, res5_feat = self.Box_Head(blob_conv, rpn_ret)
+                box_feat, res5_feat = self.Box_Head(
+                    blob_conv[cfg.FAST_RCNN.INPUT_INDEX], rpn_ret)
             else:
-                box_feat = self.Box_Head(blob_conv, rpn_ret)
+                box_feat = self.Box_Head(blob_conv[cfg.FAST_RCNN.INPUT_INDEX],
+                                         rpn_ret)
             cls_score, bbox_pred = self.Box_Outs(box_feat)
         else:
             # TODO: complete the returns for RPN only situation
@@ -230,7 +250,8 @@ class Generalized_RCNN(nn.Module):
                     mask_feat = self.Mask_Head(res5_feat, rpn_ret,
                                                roi_has_mask_int32=rpn_ret['roi_has_mask_int32'])
                 else:
-                    mask_feat = self.Mask_Head(blob_conv, rpn_ret)
+                    mask_feat = self.Mask_Head(
+                        blob_conv[cfg.MRCNN.INPUT_INDEX], rpn_ret)
                 mask_pred = self.Mask_Outs(mask_feat)
                 # return_dict['mask_pred'] = mask_pred
                 # mask loss
@@ -244,7 +265,8 @@ class Generalized_RCNN(nn.Module):
                     kps_feat = self.Keypoint_Head(res5_feat, rpn_ret,
                                                   roi_has_keypoints_int32=rpn_ret['roi_has_keypoint_int32'])
                 else:
-                    kps_feat = self.Keypoint_Head(blob_conv, rpn_ret)
+                    kps_feat = self.Keypoint_Head(
+                        blob_conv[cfg.KRCNN.INPUT_INDEX], rpn_ret)
                 kps_pred = self.Keypoint_Outs(kps_feat)
                 # return_dict['keypoints_pred'] = kps_pred
                 # keypoints loss
@@ -358,14 +380,15 @@ class Generalized_RCNN(nn.Module):
     @check_inference
     def mask_net(self, blob_conv, rpn_blob):
         """For inference"""
-        mask_feat = self.Mask_Head(blob_conv, rpn_blob)
+        mask_feat = self.Mask_Head(blob_conv[cfg.MRCNN.INPUT_INDEX], rpn_blob)
         mask_pred = self.Mask_Outs(mask_feat)
         return mask_pred
 
     @check_inference
     def keypoint_net(self, blob_conv, rpn_blob):
         """For inference"""
-        kps_feat = self.Keypoint_Head(blob_conv, rpn_blob)
+        kps_feat = self.Keypoint_Head(blob_conv[cfg.KRCNN.INPUT_INDEX],
+                                      rpn_blob)
         kps_pred = self.Keypoint_Outs(kps_feat)
         return kps_pred
 
