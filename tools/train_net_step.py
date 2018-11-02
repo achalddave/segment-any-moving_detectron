@@ -371,6 +371,20 @@ def main():
         logger.info("loading Detectron weights %s", args.load_detectron)
         load_detectron_weight(maskRCNN, args.load_detectron)
 
+    training_from_scratch = not (args.load_detectron or args.load_ckpt
+                                 or cfg.MODEL.LOAD_IMAGENET_PRETRAINED_WEIGHTS)
+    if training_from_scratch and cfg.RESNETS.FREEZE_BATCH_NORM:
+        raise ValueError(
+            "It looks like you're trying to train from scratch, but "
+            "cfg.RESNETS.FREEZE_BATCH_NORM is True. This will likely fail to "
+            "train.")
+    elif not training_from_scratch and not cfg.RESNETS.FREEZE_BATCH_NORM:
+        raise ValueError(
+            "It looks like you're fine-tuning, but "
+            "cfg.RESNETS.FREEZE_BATCH_NORM is False. By default, when "
+            "fine-tuning, batch norm should be frozen, so this may not be "
+            "what you want.")
+
     lr = optimizer.param_groups[0]['lr']  # lr of non-bias parameters, for commmand line outputs.
 
     maskRCNN = mynn.DataParallel(maskRCNN, cpu_keywords=['im_info', 'roidb'],

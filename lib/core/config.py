@@ -965,6 +965,8 @@ __C.RESNETS.RES5_DILATION = 1
 # be fixed.
 __C.RESNETS.FREEZE_AT = 2
 
+__C.RESNETS.FREEZE_BATCH_NORM = True
+
 # Path to pretrained resnet weights on ImageNet.
 # If start with '/', then it is treated as a absolute path.
 # Otherwise, treat as a relative path to __C.ROOT_DIR
