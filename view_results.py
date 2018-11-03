@@ -45,8 +45,8 @@ def main():
     for step, step_dir in steps_with_paths:
         dataset_dir = list(step_dir.glob(args.dataset_glob))
         if len(dataset_dir) > 1:
-            raise ValueError('Multiple directories match dataset_glob: %s',
-                             dataset_dir)
+            raise ValueError('Multiple directories match dataset_glob:\n%s'
+                             % '\n'.join(map(str, dataset_dir)))
         elif len(dataset_dir) == 0:
             continue
         else:
