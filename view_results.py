@@ -19,7 +19,6 @@ def simple_table(rows):
     return output
 
 
-# @profile
 def main():
     # Use first line of file docstring as description if it exists.
     parser = argparse.ArgumentParser(
