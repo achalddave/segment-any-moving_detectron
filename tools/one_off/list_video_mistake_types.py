@@ -27,14 +27,16 @@ def main():
               "'detection_results.pkl', or 'segmentation_results.pkl'."),
         type=Path,
         required=True)
-    parser.add_argument('--output-log', required=True, type=Path)
+    parser.add_argument('--output-dir', required=True, type=Path)
     parser.add_argument('--score-threshold', type=float, default=0.7)
     parser.add_argument('--iou-threshold', type=float, default=0.5)
 
     args = parser.parse_args()
     assert args.coco_eval_pickle.exists()
 
-    setup_logging(str(args.output_log))
+    args.output_dir.mkdir(exist_ok=True, parents=True)
+    output_log = str(args.output_dir / (Path(__file__).name + '.log'))
+    setup_logging(output_log)
     logging.info('sys.argv: %s', ' '.join(sys.argv))
     logging.info('Parsed args:\n%s', vars(args))
 
@@ -107,27 +109,37 @@ def main():
         all_sequences - sequences_with_missed_groundtruth -
         sequences_with_unmatched_detections)
 
+    sequences_with_unmatched_detections = sorted(
+        sequences_with_unmatched_detections)
     logging.info('Num images with unmatched detections: %s',
                  len(images_with_unmatched_detections))
     logging.info('Num sequences with unmatched detections: %s',
                  len(sequences_with_unmatched_detections))
     logging.info('Sequences with unmatched detections: %s',
-                 ', '.join(sorted(sequences_with_unmatched_detections)))
+                 ', '.join(sequences_with_unmatched_detections))
+    with open(args.output_dir / 'false-positive-sequences.txt', 'w') as f:
+        f.write('\n'.join(sequences_with_unmatched_detections))
 
+    sequences_with_missed_groundtruth = sorted(
+        sequences_with_missed_groundtruth)
     logging.info('Num images with missed groundtruth: %s',
                  len(images_with_missed_groundtruth))
     logging.info('Num sequences with missed groundtruth: %s',
                  len(sequences_with_missed_groundtruth))
     logging.info('Sequences with missed groundtruth: %s',
                  ', '.join(sorted(sequences_with_missed_groundtruth)))
+    with open(args.output_dir / 'false-negative-sequences.txt', 'w') as f:
+        f.write('\n'.join(sequences_with_missed_groundtruth))
 
+    sequences_with_no_mistakes = sorted(sequences_with_no_mistakes)
     logging.info('Num images with no mistakes: %s',
                  len(images_with_no_mistakes))
     logging.info('Num sequences with no mistakes: %s',
                  len(sequences_with_no_mistakes))
     logging.info('Sequences with no mistakes: %s',
-                 ', '.join(sorted(sequences_with_no_mistakes)))
-
+                 ', '.join(sequences_with_no_mistakes))
+    with open(args.output_dir / 'no-mistake-sequences.txt', 'w') as f:
+        f.write('\n'.join(sequences_with_no_mistakes))
 
 
 if __name__ == "__main__":
