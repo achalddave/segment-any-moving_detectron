@@ -65,7 +65,8 @@ def main():
     else:
         if args.coco_eval_pickle is None:
             args.coco_eval_pickle = '{pickle_parent}/detection_results.pkl'
-        args.coco_eval_pickle = args.coco_eval_pickle.format(pickle_parent=args.detections_pickle.parent)
+        args.coco_eval_pickle = args.coco_eval_pickle.format(
+            pickle_parent=args.detections_pickle.parent)
         with open(args.coco_eval_pickle, 'rb') as f:
             groundtruth = pickle.load(f).cocoGt
 
@@ -93,6 +94,7 @@ def main():
             output_file.parent.mkdir(exist_ok=True, parents=True)
             with open(output_file, 'wb') as f:
                 pickle.dump(output, f)
+
 
 if __name__ == "__main__":
     main()
