@@ -102,8 +102,8 @@ if __name__ == '__main__':
         logger.info('Automatically set output directory to %s',
                     args.output_dir)
 
-    file_logger.info('Called with args:')
-    file_logger.info(args)
+    file_logger.info('Called with args:\n')
+    file_logger.info(pprint.pformat(vars(args)))
 
     cfg.VIS = args.vis
 
