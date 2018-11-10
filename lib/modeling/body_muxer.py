@@ -231,9 +231,9 @@ class BodyMuxer_ConcatenateAdapt(BodyMuxer_Concatenate):
     def get_Xconvs3x3(dim_in, dim_out, num_convs):
         module_list = []
         for i in range(num_convs):
-            module_list.extend((nn.Conv2d(
-                dim_in, dim_out, kernel_size=3, stride=1, padding=1),
-                                nn.ReLU(inplace=True)))
+            module_list.extend((
+                nn.Conv2d(dim_in, dim_out, kernel_size=3, stride=1, padding=1),
+                nn.ReLU(inplace=True)))
             dim_in = dim_out
         return nn.Sequential(*module_list)
 
