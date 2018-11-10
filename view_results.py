@@ -69,6 +69,10 @@ def main():
         step = int(step_dir.stem.split('step')[1])
         results.append([str(step)] + list(current_results[1]))
 
+    if not results:
+        raise ValueError('No results found.')
+    results = sorted(results, key=lambda x: int(x[0]))
+
     if args.verbose:
         print('Evaluation paths:\n%s' % '\n'.join(str(x) for x in evaluation_files))
     print(simple_table([header] + results))
