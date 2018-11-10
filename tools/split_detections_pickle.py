@@ -69,7 +69,7 @@ def main():
         with open(args.coco_eval_pickle, 'rb') as f:
             groundtruth = pickle.load(f).cocoGt
 
-    image_ids = groundtruth.getImgIds()
+    image_ids = sorted(groundtruth.getImgIds())
 
     with open(args.detections_pickle, 'rb') as f:
         data = pickle.load(f)
