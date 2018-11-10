@@ -30,9 +30,6 @@ def main():
 
     args = parser.parse_args()
     model_dir = args.model_dir
-    steps_with_paths = [(int(x.stem.split('step')[1]), x)
-                        for x in model_dir.glob('step*')]
-    steps_with_paths = sorted(steps_with_paths, key=lambda x: x[0])
 
     print('Evaluating model: %s' % model_dir)
 
@@ -41,7 +38,7 @@ def main():
 
     results = []
     evaluation_files = []
-    for step, step_dir in steps_with_paths:
+    for step_dir in model_dir.glob('step*'):
         dataset_dir = list(step_dir.glob(args.dataset_glob))
         if len(dataset_dir) > 1:
             raise ValueError('Multiple directories match dataset_glob:\n%s'
@@ -69,6 +66,7 @@ def main():
             continue
         if header is None:
             header = ['Step'] + list(current_results[0])
+        step = int(step_dir.stem.split('step')[1])
         results.append([str(step)] + list(current_results[1]))
 
     if args.verbose:
