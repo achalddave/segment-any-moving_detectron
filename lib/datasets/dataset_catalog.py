@@ -505,6 +505,35 @@ DATASETS = {
         IMAGE_EXTENSION: '.jpg',
         IS_FLOW: False
     },
+    # DAVIS 16 datasets ending in _instance contain instance annotations from
+    # DAVIS 2017, as opposed to the default DAVIS 2016 annotations, which are
+    # binary masks.
+    'davis16_flownet2_train_instance': {
+        IM_DIR: _DATA_DIR + '/davis/flownet2/',
+        ANN_FN: _DATA_DIR + '/davis16/annotations/2017-annotations/train-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    'davis16_flownet2_val_instance': {
+        IM_DIR: _DATA_DIR + '/davis/flownet2/',
+        ANN_FN: _DATA_DIR + '/davis16/annotations/2017-annotations/val-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    'davis16_rgb_train_instance': {
+        IM_DIR: _DATA_DIR + '/davis16/JPEGImages/',
+        ANN_FN: _DATA_DIR + '/davis16/annotations/2017-annotations/train-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IMAGE_EXTENSION: '.jpg',
+        IS_FLOW: False
+    },
+    'davis16_rgb_val_instance': {
+        IM_DIR: _DATA_DIR + '/davis16/JPEGImages/',
+        ANN_FN: _DATA_DIR + '/davis16/annotations/2017-annotations/val-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IMAGE_EXTENSION: '.jpg',
+        IS_FLOW: False
+    },
     # The "moving" splits for DAVIS 16 contain all the videos from DAVIS 16,
     # but the splits respect the splits made for DAVIS 17 moving videos above.
     'davis16_flow_moving_train': {
