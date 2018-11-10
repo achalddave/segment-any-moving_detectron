@@ -453,6 +453,8 @@ def main():
         pool.close()
         pool.join()
 
+    logging.info('Saved outputs to:\n%s', output_dir.resolve())
+
 
 if __name__ == '__main__':
     try:
