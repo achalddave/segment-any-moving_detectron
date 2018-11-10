@@ -129,6 +129,16 @@ def parse_args():
               'on one modality (flow) but visualizing on another (RGB).'))
     parser.add_argument('--vis_threshold', default=0.7, type=float)
     parser.add_argument('--vis_num_workers', default=4, type=int)
+    parser.add_argument(
+        '--vis_every_kth',
+        type=int,
+        default=1,
+        help=('Visualize every kth frame. Sort all pickle files using a '
+              'natural sort that will respect frame ordering with typical '
+              'file names (e.g. "frame001.png" or "001.png" etc.), and only '
+              'visualize on every k\'th frame. If --recursive is specified, '
+              'follow this procedure for every directory containing a .pickle '
+              'file separately.'))
 
     parser.add_argument(
         '--input_types',
@@ -353,9 +363,18 @@ def main():
         images = [(Path(x),) for x in args.images]
         output_images = [output_dir / (x[0].stem + '.png') for x in images]
         vis_images = [x[0] for x in images]
+
     output_pickles = [x.with_suffix('.pickle') for x in output_images]
 
     if args.save_images:
+        if args.vis_every_kth != 1:
+            from visualize_pickle import subsample_by_parent_dir
+            subsampled_paths = set(
+                subsample_by_parent_dir(vis_images, args.vis_every_kth))
+            vis_images = [
+                x if x in subsampled_paths else None for x in vis_images
+            ]
+
         # This is the type of parallel code that would really benefit from
         # using the concurrent.futures API, but unfortunately, for some reason,
         # OpenCV hangs when visualizing in a process launched through a
@@ -376,11 +395,12 @@ def main():
     for image_paths, vis_path, out_image, out_data in zip(
             tqdm(images, desc='Infer', position=0), vis_images,
             output_images, output_pickles):
-        if ((not args.save_images or os.path.isfile(out_image))
-                and os.path.isfile(out_data)):
+        if ((not args.save_images or out_image.exists())
+                and out_data.exists()):
             file_logger.info(
                 'Already processed {}, skipping'.format((image_paths, )))
-            vis_progress.update()
+            if args.save_images:
+                vis_progress.update()
             continue
 
         image_list = []
@@ -414,9 +434,9 @@ def main():
         def raiser(e):
             raise e
 
-        if args.save_images and os.path.isfile(out_image):
+        if args.save_images and (out_image.exists() or vis_path is None):
             vis_progress.update()
-        elif args.save_images:
+        elif args.save_images and vis_path is not None:
             out_image.parent.mkdir(exist_ok=True, parents=True)
             pool.apply_async(
                 visualize,
