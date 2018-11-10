@@ -45,7 +45,7 @@ from datasets.json_dataset import frame_offset
 from utils.blob import pack_sequence
 from utils.detectron_weight_helper import load_detectron_weight
 from utils.flow import load_flow_png
-from utils.logging import setup_logging
+from utils.logging import log_argv, setup_logging
 from utils.timer import Timer
 from visualize_pickle import visualize
 
@@ -188,6 +188,8 @@ def main():
         './git-state/save_git_state.sh',
         str(output_dir / ('git-state_%s' % launch_time_str))
     ])
+
+    log_argv(file_logger)
 
     logging.info('Called with args:')
     logging.info(pformat(vars(args)))

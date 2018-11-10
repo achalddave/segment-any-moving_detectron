@@ -102,6 +102,16 @@ def send_email(subject, body, to):
     s.sendmail('detectron', to, mime.as_string())
 
 
+def log_argv(logger=None, add_newlines=True):
+    argv = sys.argv
+    if add_newlines:
+        argv = ' '.join(argv).replace('--', '\\\n--')
+    message = 'sys.argv:\npython %s' % argv
+    if not logger:
+        logger = logging
+    logger.info(message)
+
+
 def setup_logging(logging_filepath=None):
     """Setup root logger, optionally to log also to stdout.
 

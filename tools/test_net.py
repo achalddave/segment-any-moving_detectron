@@ -102,6 +102,7 @@ if __name__ == '__main__':
         logger.info('Automatically set output directory to %s',
                     args.output_dir)
 
+    utils.logging.log_argv(file_logger)
     file_logger.info('Called with args:\n')
     file_logger.info(pprint.pformat(vars(args)))
 

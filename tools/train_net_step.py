@@ -32,7 +32,7 @@ from datasets.roidb import combined_roidb_for_training
 from roi_data.loader import RoiDataLoader, MinibatchSampler, BatchSampler, collate_minibatch
 from modeling.model_builder import Generalized_RCNN
 from utils.detectron_weight_helper import load_detectron_weight
-from utils.logging import setup_logging
+from utils.logging import log_argv, setup_logging
 from utils.timer import Timer
 from utils.training_stats import TrainingStats
 
@@ -206,7 +206,8 @@ def main():
         file_logger = logging.getLogger(__name__)
     logger = logging.getLogger(__name__)
 
-    file_logger.info('sys.argv:\npython %s', ' '.join(sys.argv))
+    log_argv(file_logger)
+
     file_logger.info('Args: %s', pprint.pformat(orig_args))
     file_logger.info('Config: %s', pprint.pformat(cfg))
     file_logger.info('Experiment id: %s', experiment_id)
