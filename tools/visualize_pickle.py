@@ -8,6 +8,7 @@ on the raw pixels).
 """
 
 import argparse
+import collections
 import logging
 import pickle
 from multiprocessing import Pool
@@ -63,7 +64,41 @@ def _set_logging(logging_filepath):
     logging.info('Writing log file to %s', logging_filepath)
 
 
-def visualize(image_or_path, pickle_data_or_path, output_path, dataset, thresh):
+def subsample_by_parent_dir(paths, subsample_factor):
+    """Subsample files at a specified rate by parent directory.
+
+    >>> subsampled_paths = subsample_by_parent_dir(
+    ...     [Path(x) for x in 
+    ...      ['a/1.png', 'a/2.png', 'a/3.png', 'a/4.png', 'b/1.png']])
+    >>> assert len(subsampled_paths) == 3
+    >>> assert str(subsampled_paths[0]) == 'a/1.png'
+    >>> assert str(subsampled_paths[1]) == 'a/4.png'
+    >>> assert str(subsampled_paths[2]) == 'b/1.png'
+    """
+    if subsample_factor == 1:
+        return paths
+
+    import natsort
+    endings = collections.defaultdict(lambda: 'th',
+                                      {1: 'st', 2: 'nd', 3: 'rd'})
+    pickles_by_dir = collections.defaultdict(list)
+    for pickle_file in paths:
+        pickles_by_dir[pickle_file.parent].append(pickle_file)
+
+    num_before_subsampling = len(paths)
+    paths = []
+    for dir_pickles in pickles_by_dir.values():
+        paths.extend(
+            natsort.natsorted(dir_pickles,
+                              alg=natsort.ns.PATH)[::subsample_factor])
+    logging.info('Subsampling, visualizing every %s frame (%s / %s frames).' %
+                 (str(subsample_factor) + endings[subsample_factor],
+                  len(paths), num_before_subsampling))
+    return paths
+
+
+def visualize(image_or_path, pickle_data_or_path, output_path, dataset,
+              thresh):
     if output_path.exists():
         return
 
@@ -117,6 +152,16 @@ def main():
         default='.png')
     parser.add_argument('--threshold', default=0.7, type=float)
     parser.add_argument('--num-workers', type=int, default=4)
+    parser.add_argument(
+        '--every-kth-frame',
+        type=int,
+        default=1,
+        help=('Visualize every kth frame. Sort all pickle files using '
+              'a natural sort that will respect frame ordering with typical '
+              'file names (e.g. "frame001.png" or "001.png" etc.), and '
+              'only visualize on every k\'th frame. If --recursive is '
+              'specified, follow this procedure for every directory '
+              'containing a .pickle file separately.'))
 
     args = parser.parse_args()
 
@@ -151,6 +196,10 @@ def main():
     else:
         detectron_outputs = list(pickle_root.glob('*.pickle')) + list(
             pickle_root.rglob('*.pkl'))
+
+    if args.every_kth_frame != 1:
+        detectron_outputs = subsample_by_parent_dir(detectron_outputs,
+                                                    args.every_kth_frame)
 
     relative_paths = [x.relative_to(pickle_root) for x in detectron_outputs]
     images = [
