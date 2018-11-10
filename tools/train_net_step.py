@@ -165,8 +165,22 @@ def main():
 
     cfg_from_file(args.cfg_file)
 
-    tools_util.update_cfg_for_dataset(args.datasets, update_pixel_means=True)
-    cfg.TRAIN.DATASETS = (args.datasets, )
+    if len(args.datasets) > cfg.DATA_LOADER.NUM_INPUTS:
+        # Multiple datasets are specified, e.g.
+        #   --datasets <d1_i1> <d1_i2> <d2_i1> <d2_i2>
+        # where d1_i2 indicates dataset 1, input 2. Split this into a list of
+        #   [[d1_i1, d1_i2], [d2_i1, d2_i2]]
+        # TODO(achald): Ensure that all the datasets have the same number of
+        # classes and the pixel means for each are the same.
+        n_i = cfg.DATA_LOADER.NUM_INPUTS
+        args.datasets = [
+            args.datasets[i:i + n_i] for i in range(0, len(args.datasets), n_i)
+        ]
+    else:
+        args.datasets = [args.datasets]
+    tools_util.update_cfg_for_dataset(
+        args.datasets[0], update_pixel_means=True)
+    cfg.TRAIN.DATASETS = args.datasets
 
     if args.set_cfgs is not None:
         cfg_from_list(args.set_cfgs)
