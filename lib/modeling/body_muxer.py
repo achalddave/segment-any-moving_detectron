@@ -224,6 +224,12 @@ class BodyMuxer_ConcatenateAdapt(BodyMuxer_Concatenate):
         return self.adaptor(concatenated)
 
     @staticmethod
+    def adapt_residual(dim_in, dim_out):
+        from modeling.ResNet import add_residual_block
+        return add_residual_block(
+            dim_in, dim_out, dim_out, dilation=1, stride=1)
+
+    @staticmethod
     def adapt_3convs3x3(dim_in, dim_out):
         return BodyMuxer_ConcatenateAdapt.get_Xconvs3x3(dim_in, dim_out, 3)
 
