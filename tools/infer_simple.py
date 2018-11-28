@@ -210,6 +210,8 @@ def main():
 
     if args.num_classes is None:
         args.num_classes = cfg.MODEL.NUM_CLASSES
+    elif cfg.MODEL.NUM_CLASSES == -1:
+        cfg.MODEL.NUM_CLASSES = args.num_classes
 
     if args.num_classes == 2:
         dataset = datasets.get_objectness_dataset()
