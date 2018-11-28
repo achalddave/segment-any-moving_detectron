@@ -290,6 +290,11 @@ def main():
                 zip(image_dirs, cfg.DATA_LOADER.INPUT_FRAME_OFFSETS)):
             if args.recursive:
                 images = [x for x in image_dir.rglob('*') if is_image(x)]
+                # Handle one-level of symlinks for ease of use.
+                for symlink_dir in image_dir.iterdir():
+                    if symlink_dir.is_symlink() and symlink_dir.is_dir():
+                        images.extend(
+                            [x for x in symlink_dir.rglob('*') if is_image(x)])
             else:
                 images = [x for x in image_dir.iterdir() if is_image(x)]
 
