@@ -534,6 +534,12 @@ DATASETS = {
         IMAGE_EXTENSION: '.jpg',
         IS_FLOW: False
     },
+    'davis16_liteflownet_val_instance': {
+        IM_DIR: _DATA_DIR + '/davis/liteflownet/',
+        ANN_FN: _DATA_DIR + '/davis16/annotations/2017-annotations/val-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
     # The "moving" splits for DAVIS 16 contain all the videos from DAVIS 16,
     # but the splits respect the splits made for DAVIS 17 moving videos above.
     'davis16_flow_moving_train': {
