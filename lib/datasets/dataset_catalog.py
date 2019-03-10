@@ -118,22 +118,6 @@ DATASETS = {
         NUM_CLASSES: 81,
         IS_FLOW: False
     },
-    'coco_2017_train_objectness': {
-        IM_DIR:
-            _DATA_DIR + '/coco/images/train2017',
-        ANN_FN:
-            _DATA_DIR + '/coco/annotations/instances_train2017_objectness.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: False
-    },
-    'coco_2017_val_objectness': {
-        IM_DIR:
-            _DATA_DIR + '/coco/images/val2017',
-        ANN_FN:
-            _DATA_DIR + '/coco/annotations/instances_val2017_objectness.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: False
-    },
     'coco_2017_train': {
         IM_DIR:
             _DATA_DIR + '/coco/images/train2017',
@@ -184,6 +168,192 @@ DATASETS = {
             _DATA_DIR + '/coco/annotations/stuff_val.json',
         IS_FLOW: False
     },
+    'keypoints_coco_2014_train': {
+        IM_DIR:
+            _DATA_DIR + '/coco/images/train2014',
+        ANN_FN:
+            _DATA_DIR + '/coco/annotations/person_keypoints_train2014.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
+    },
+    'keypoints_coco_2014_val': {
+        IM_DIR:
+            _DATA_DIR + '/coco/images/val2014',
+        ANN_FN:
+            _DATA_DIR + '/coco/annotations/person_keypoints_val2014.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
+    },
+    'keypoints_coco_2014_minival': {
+        IM_DIR:
+            _DATA_DIR + '/coco/images/val2014',
+        ANN_FN:
+            _DATA_DIR + '/coco/annotations/person_keypoints_minival2014.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
+    },
+    'keypoints_coco_2014_valminusminival': {
+        IM_DIR:
+            _DATA_DIR + '/coco/images/val2014',
+        ANN_FN:
+            _DATA_DIR + '/coco/annotations/person_keypoints_valminusminival2014.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
+    },
+    'keypoints_coco_2015_test': {
+        IM_DIR:
+            _DATA_DIR + '/coco/images/test2015',
+        ANN_FN:
+            _DATA_DIR + '/coco/annotations/image_info_test2015.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
+    },
+    'keypoints_coco_2015_test-dev': {
+        IM_DIR:
+            _DATA_DIR + '/coco/images/test2015',
+        ANN_FN:
+            _DATA_DIR + '/coco/annotations/image_info_test-dev2015.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
+    },
+    'keypoints_coco_2017_train': {
+        IM_DIR:
+            _DATA_DIR + '/coco/images/train2017',
+        ANN_FN:
+            _DATA_DIR + '/coco/annotations/person_keypoints_train2017.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
+    },
+    'keypoints_coco_2017_val': {
+        IM_DIR:
+            _DATA_DIR + '/coco/images/val2017',
+        ANN_FN:
+            _DATA_DIR + '/coco/annotations/person_keypoints_val2017.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
+    },
+    'keypoints_coco_2017_test': {
+        IM_DIR:
+            _DATA_DIR + '/coco/images/test2017',
+        ANN_FN:
+            _DATA_DIR + '/coco/annotations/image_info_test2017.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
+    },
+    'voc_2007_trainval': {
+        IM_DIR:
+            _DATA_DIR + '/VOC2007/JPEGImages',
+        ANN_FN:
+            _DATA_DIR + '/VOC2007/annotations/voc_2007_trainval.json',
+        DEVKIT_DIR:
+            _DATA_DIR + '/VOC2007/VOCdevkit2007',
+        IS_FLOW: False
+    },
+    'voc_2007_test': {
+        IM_DIR:
+            _DATA_DIR + '/VOC2007/JPEGImages',
+        ANN_FN:
+            _DATA_DIR + '/VOC2007/annotations/voc_2007_test.json',
+        DEVKIT_DIR:
+            _DATA_DIR + '/VOC2007/VOCdevkit2007',
+        IS_FLOW: False
+    },
+    'voc_2012_trainval': {
+        IM_DIR:
+            _DATA_DIR + '/VOC2012/JPEGImages',
+        ANN_FN:
+            _DATA_DIR + '/VOC2012/annotations/voc_2012_trainval.json',
+        DEVKIT_DIR:
+            _DATA_DIR + '/VOC2012/VOCdevkit2012',
+        IS_FLOW: False
+    }
+}
+
+DATASETS.update({
+    'coco_2017_train_objectness': {
+        IM_DIR:
+            _DATA_DIR + '/coco/images/train2017',
+        ANN_FN:
+            _DATA_DIR + '/coco/annotations/instances_train2017_objectness.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
+    },
+    'coco_2017_val_objectness': {
+        IM_DIR:
+            _DATA_DIR + '/coco/images/val2017',
+        ANN_FN:
+            _DATA_DIR + '/coco/annotations/instances_val2017_objectness.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
+    },
+})
+
+# FBMS
+DATASETS.update({
+    'fbms_rgb_train': {
+        IM_DIR: _DATA_DIR + '/fbms/highres/rgb/',
+        ANN_FN: _DATA_DIR + '/fbms/annotations/train-without-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
+    },
+    'fbms_rgb_test': {
+        IM_DIR: _DATA_DIR + '/fbms/highres/rgb/',
+        ANN_FN: _DATA_DIR + '/fbms/annotations/test-without-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False
+    },
+    'fbms_flow_train': {
+        IM_DIR: _DATA_DIR + '/fbms/highres/liteflownet/',
+        ANN_FN: _DATA_DIR + '/fbms/annotations/train-without-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    'fbms_flow_test': {
+        IM_DIR: _DATA_DIR + '/fbms/highres/liteflownet/',
+        ANN_FN: _DATA_DIR + '/fbms/annotations/test-without-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    'fbms_flownet2_train': {
+        IM_DIR: _DATA_DIR + '/fbms/highres/flownet2/',
+        ANN_FN: _DATA_DIR + '/fbms/annotations/train-without-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    'fbms_flownet2_test': {
+        IM_DIR: _DATA_DIR + '/fbms/highres/flownet2/',
+        ANN_FN: _DATA_DIR + '/fbms/annotations/test-without-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    'fbms_hed_flow_train': {
+        IM_DIR: _DATA_DIR + '/fbms/highres/hed-flow-concat/',
+        ANN_FN: _DATA_DIR + '/fbms/annotations/train-without-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    'fbms_hed_flow_test': {
+        IM_DIR: _DATA_DIR + '/fbms/highres/hed-flow-concat/',
+        ANN_FN: _DATA_DIR + '/fbms/annotations/test-without-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    'fbms_hed_flownet2_train': {
+        IM_DIR: _DATA_DIR + '/fbms/highres/hed-flownet2-concat/',
+        ANN_FN: _DATA_DIR + '/fbms/annotations/train-without-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    'fbms_hed_flownet2_test': {
+        IM_DIR: _DATA_DIR + '/fbms/highres/hed-flownet2-concat/',
+        ANN_FN: _DATA_DIR + '/fbms/annotations/test-without-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+})
+
+# FlyingThings3D
+DATASETS.update({
     'flyingthings3d_rgb_train': {
         IM_DIR:
             _DATA_DIR + '/flyingthings3d/rgb_images/',
@@ -288,67 +458,11 @@ DATASETS = {
             _DATA_DIR + '/flyingthings3d/annotations/test-without-last-frame.json',
         NUM_CLASSES: 2,
         IS_FLOW: True
-    },
-    'fbms_rgb_train': {
-        IM_DIR: _DATA_DIR + '/fbms/highres/rgb/',
-        ANN_FN: _DATA_DIR + '/fbms/annotations/train-without-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: False
-    },
-    'fbms_rgb_test': {
-        IM_DIR: _DATA_DIR + '/fbms/highres/rgb/',
-        ANN_FN: _DATA_DIR + '/fbms/annotations/test-without-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: False
-    },
-    'fbms_flow_train': {
-        IM_DIR: _DATA_DIR + '/fbms/highres/liteflownet/',
-        ANN_FN: _DATA_DIR + '/fbms/annotations/train-without-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: True
-    },
-    'fbms_flow_test': {
-        IM_DIR: _DATA_DIR + '/fbms/highres/liteflownet/',
-        ANN_FN: _DATA_DIR + '/fbms/annotations/test-without-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: True
-    },
-    'fbms_flownet2_train': {
-        IM_DIR: _DATA_DIR + '/fbms/highres/flownet2/',
-        ANN_FN: _DATA_DIR + '/fbms/annotations/train-without-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: True
-    },
-    'fbms_flownet2_test': {
-        IM_DIR: _DATA_DIR + '/fbms/highres/flownet2/',
-        ANN_FN: _DATA_DIR + '/fbms/annotations/test-without-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: True
-    },
-    'fbms_hed_flow_train': {
-        IM_DIR: _DATA_DIR + '/fbms/highres/hed-flow-concat/',
-        ANN_FN: _DATA_DIR + '/fbms/annotations/train-without-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: True
-    },
-    'fbms_hed_flow_test': {
-        IM_DIR: _DATA_DIR + '/fbms/highres/hed-flow-concat/',
-        ANN_FN: _DATA_DIR + '/fbms/annotations/test-without-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: True
-    },
-    'fbms_hed_flownet2_train': {
-        IM_DIR: _DATA_DIR + '/fbms/highres/hed-flownet2-concat/',
-        ANN_FN: _DATA_DIR + '/fbms/annotations/train-without-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: True
-    },
-    'fbms_hed_flownet2_test': {
-        IM_DIR: _DATA_DIR + '/fbms/highres/hed-flownet2-concat/',
-        ANN_FN: _DATA_DIR + '/fbms/annotations/test-without-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: True
-    },
+    }
+})
+
+# DAVIS
+DATASETS.update({
     'davis_rgb_moving_train': {
         IM_DIR: _DATA_DIR + '/davis/JPEGImages/',
         ANN_FN: _DATA_DIR + '/davis/annotations/moving-train-no-last-frame.json',
@@ -363,6 +477,9 @@ DATASETS = {
         IMAGE_EXTENSION: '.jpg',
         IS_FLOW: False
     },
+    # Validation set of moving sequences; this actually contains sequences from
+    # both the official training and validation sets! It is not used in any
+    # final results.
     'davis_rgb_moving_val': {
         IM_DIR: _DATA_DIR + '/davis/JPEGImages/',
         ANN_FN: _DATA_DIR + '/davis/annotations/moving-val-no-last-frame.json',
@@ -464,6 +581,22 @@ DATASETS = {
     'davis_flownet2_flow_moving_test': {
         IM_DIR: _DATA_DIR + '/davis/flownet2/',
         ANN_FN: _DATA_DIR + '/davis/annotations/moving-test-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: True
+    },
+    # Moving sequence from DAVIS 2017's validation set. This is _different_
+    # from davis_rgb_moving_val, which is a separate "validation" set I made
+    # from the subset of sequences I marked as moving.
+    'davis_val_rgb_moving': {
+        IM_DIR: _DATA_DIR + '/davis/JPEGImages/',
+        ANN_FN: _DATA_DIR + '/davis/annotations/davis-val-moving-all-no-last-frame.json',
+        NUM_CLASSES: 2,
+        IS_FLOW: False,
+        IMAGE_EXTENSION: '.jpg',
+    },
+    'davis_val_flownet2_flow_moving': {
+        IM_DIR: _DATA_DIR + '/davis/flownet2/',
+        ANN_FN: _DATA_DIR + '/davis/annotations/davis-val-moving-all-no-last-frame.json',
         NUM_CLASSES: 2,
         IS_FLOW: True
     },
@@ -653,6 +786,10 @@ DATASETS = {
         NUM_CLASSES: 2,
         IS_FLOW: True
     },
+})
+
+# YTVOS
+DATASETS.update({
     'ytvos_rgb_sub_train_8-21-18': {
         IM_DIR: _DATA_DIR + '/ytvos/rgb/train',
         ANN_FN: _DATA_DIR + '/ytvos/train-splits/sub-train-no-last-frame.json',
@@ -885,106 +1022,7 @@ DATASETS = {
         IS_FLOW: True,
         IMAGE_EXTENSION: '.png'
     },
-    'keypoints_coco_2014_train': {
-        IM_DIR:
-            _DATA_DIR + '/coco/images/train2014',
-        ANN_FN:
-            _DATA_DIR + '/coco/annotations/person_keypoints_train2014.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: False
-    },
-    'keypoints_coco_2014_val': {
-        IM_DIR:
-            _DATA_DIR + '/coco/images/val2014',
-        ANN_FN:
-            _DATA_DIR + '/coco/annotations/person_keypoints_val2014.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: False
-    },
-    'keypoints_coco_2014_minival': {
-        IM_DIR:
-            _DATA_DIR + '/coco/images/val2014',
-        ANN_FN:
-            _DATA_DIR + '/coco/annotations/person_keypoints_minival2014.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: False
-    },
-    'keypoints_coco_2014_valminusminival': {
-        IM_DIR:
-            _DATA_DIR + '/coco/images/val2014',
-        ANN_FN:
-            _DATA_DIR + '/coco/annotations/person_keypoints_valminusminival2014.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: False
-    },
-    'keypoints_coco_2015_test': {
-        IM_DIR:
-            _DATA_DIR + '/coco/images/test2015',
-        ANN_FN:
-            _DATA_DIR + '/coco/annotations/image_info_test2015.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: False
-    },
-    'keypoints_coco_2015_test-dev': {
-        IM_DIR:
-            _DATA_DIR + '/coco/images/test2015',
-        ANN_FN:
-            _DATA_DIR + '/coco/annotations/image_info_test-dev2015.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: False
-    },
-    'keypoints_coco_2017_train': {
-        IM_DIR:
-            _DATA_DIR + '/coco/images/train2017',
-        ANN_FN:
-            _DATA_DIR + '/coco/annotations/person_keypoints_train2017.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: False
-    },
-    'keypoints_coco_2017_val': {
-        IM_DIR:
-            _DATA_DIR + '/coco/images/val2017',
-        ANN_FN:
-            _DATA_DIR + '/coco/annotations/person_keypoints_val2017.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: False
-    },
-    'keypoints_coco_2017_test': {
-        IM_DIR:
-            _DATA_DIR + '/coco/images/test2017',
-        ANN_FN:
-            _DATA_DIR + '/coco/annotations/image_info_test2017.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: False
-    },
-    'voc_2007_trainval': {
-        IM_DIR:
-            _DATA_DIR + '/VOC2007/JPEGImages',
-        ANN_FN:
-            _DATA_DIR + '/VOC2007/annotations/voc_2007_trainval.json',
-        DEVKIT_DIR:
-            _DATA_DIR + '/VOC2007/VOCdevkit2007',
-        IS_FLOW: False
-    },
-    'voc_2007_test': {
-        IM_DIR:
-            _DATA_DIR + '/VOC2007/JPEGImages',
-        ANN_FN:
-            _DATA_DIR + '/VOC2007/annotations/voc_2007_test.json',
-        DEVKIT_DIR:
-            _DATA_DIR + '/VOC2007/VOCdevkit2007',
-        IS_FLOW: False
-    },
-    'voc_2012_trainval': {
-        IM_DIR:
-            _DATA_DIR + '/VOC2012/JPEGImages',
-        ANN_FN:
-            _DATA_DIR + '/VOC2012/annotations/voc_2012_trainval.json',
-        DEVKIT_DIR:
-            _DATA_DIR + '/VOC2012/VOCdevkit2012',
-        IS_FLOW: False
-    }
-}
+})
 
 for dataset, info in DATASETS.items():
     # We use "+" to indicate the concatenation of datasets internally.
