@@ -289,6 +289,9 @@ DATASETS.update({
 })
 
 # FBMS
+# Paths:
+#   /fbms/annotations/ ->
+#       /data/achald/track/FBMS/json-annotations/png-filenames/
 DATASETS.update({
     'fbms_rgb_train': {
         IM_DIR: _DATA_DIR + '/fbms/highres/rgb/',
@@ -353,6 +356,9 @@ DATASETS.update({
 })
 
 # FlyingThings3D
+# Paths:
+#   /flyingthings3d/annotations ->
+#       /data/achald/track/FlyingThings3D/json-annotations/annotations/
 DATASETS.update({
     'flyingthings3d_rgb_train': {
         IM_DIR:
@@ -461,7 +467,16 @@ DATASETS.update({
     }
 })
 
-# DAVIS
+# DAVIS 17:
+#   davis_{split}_{input}_moving:
+#     - Sequences where all moving objects are labeled and all static objects
+#       are unlabeled, where {split} corresponds to the official DAVIS '17
+#       splits. Our final DAVIS '17 number, then, is computed using
+#       davis_val_rgb_moving and davis_val_flownet2_flow_moving.
+#
+# Path mapping:
+#   /davis/annotations ->
+#       /data/achald/track/DAVIS/2017/moving-only/splits/json-annotation
 DATASETS.update({
     'davis_rgb_moving_train': {
         IM_DIR: _DATA_DIR + '/davis/JPEGImages/',
@@ -476,113 +491,6 @@ DATASETS.update({
         NUM_CLASSES: 2,
         IMAGE_EXTENSION: '.jpg',
         IS_FLOW: False
-    },
-    # Validation set of moving sequences; this actually contains sequences from
-    # both the official training and validation sets! It is not used in any
-    # final results.
-    'davis_rgb_moving_val': {
-        IM_DIR: _DATA_DIR + '/davis/JPEGImages/',
-        ANN_FN: _DATA_DIR + '/davis/annotations/moving-val-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IMAGE_EXTENSION: '.jpg',
-        IS_FLOW: False
-    },
-    'davis_rgb_moving_test': {
-        IM_DIR: _DATA_DIR + '/davis/JPEGImages/',
-        ANN_FN: _DATA_DIR + '/davis/annotations/moving-test-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IMAGE_EXTENSION: '.jpg',
-        IS_FLOW: False
-    },
-    'davis_hed_moving_train': {
-        IM_DIR: _DATA_DIR + '/davis/hed/',
-        ANN_FN: _DATA_DIR + '/davis/annotations/moving-train-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: False
-    },
-    'davis_hed_moving_trainval': {
-        IM_DIR: _DATA_DIR + '/davis/hed/',
-        ANN_FN: _DATA_DIR + '/davis/annotations/moving-trainval-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: False
-    },
-    'davis_hed_moving_val': {
-        IM_DIR: _DATA_DIR + '/davis/hed/',
-        ANN_FN: _DATA_DIR + '/davis/annotations/moving-val-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: False
-    },
-    'davis_hed_moving_test': {
-        IM_DIR: _DATA_DIR + '/davis/hed/',
-        ANN_FN: _DATA_DIR + '/davis/annotations/moving-test-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: False
-    },
-    'davis_flow_relabeled_moving_train': {
-        IM_DIR: _DATA_DIR + '/davis/liteflownet/',
-        ANN_FN: _DATA_DIR + '/davis/annotations-always-moving/moving-train-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: True
-    },
-    'davis_flow_relabeled_moving_trainval': {
-        IM_DIR: _DATA_DIR + '/davis/liteflownet/',
-        ANN_FN: _DATA_DIR + '/davis/annotations-always-moving/moving-trainval-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: True
-    },
-    'davis_flow_relabeled_moving_test': {
-        IM_DIR: _DATA_DIR + '/davis/liteflownet/',
-        ANN_FN: _DATA_DIR + '/davis/annotations-always-moving/moving-test-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: True
-    },
-    'davis_flow_moving_train': {
-        IM_DIR: _DATA_DIR + '/davis/liteflownet/',
-        ANN_FN: _DATA_DIR + '/davis/annotations/moving-train-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: True
-    },
-    'davis_flow_moving_trainval': {
-        IM_DIR: _DATA_DIR + '/davis/liteflownet/',
-        ANN_FN: _DATA_DIR + '/davis/annotations/moving-trainval-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: True
-    },
-    'davis_flow_moving_val': {
-        IM_DIR: _DATA_DIR + '/davis/liteflownet/',
-        ANN_FN: _DATA_DIR + '/davis/annotations/moving-val-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: True
-    },
-    'davis_flow_moving_test': {
-        IM_DIR: _DATA_DIR + '/davis/liteflownet/',
-        ANN_FN: _DATA_DIR + '/davis/annotations/moving-test-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: True
-    },
-    'davis_flownet2_flow_moving_train': {
-        IM_DIR: _DATA_DIR + '/davis/flownet2/',
-        ANN_FN: _DATA_DIR + '/davis/annotations/moving-train-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: True
-    },
-    'davis_flownet2_flow_moving_trainval': {
-        IM_DIR: _DATA_DIR + '/davis/flownet2/',
-        ANN_FN: _DATA_DIR + '/davis/annotations/moving-trainval-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: True
-    },
-    'davis_flownet2_flow_moving_val': {
-        IM_DIR: _DATA_DIR + '/davis/flownet2/',
-        ANN_FN: _DATA_DIR + '/davis/annotations/moving-val-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: True
-    },
-    'davis_flownet2_flow_moving_test': {
-        IM_DIR: _DATA_DIR + '/davis/flownet2/',
-        ANN_FN: _DATA_DIR + '/davis/annotations/moving-test-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: True
     },
     # Moving sequence from DAVIS 2017's validation set. This is _different_
     # from davis_rgb_moving_val, which is a separate "validation" set I made
@@ -600,6 +508,23 @@ DATASETS.update({
         NUM_CLASSES: 2,
         IS_FLOW: True
     },
+})
+
+# DAVIS 16:
+#   davis16_{input}_{split}
+#     - Contain exactly all the sequences from the official {split} in DAVIS
+#       '16. Annotations come from DAVIS 2016, and so contain only a binary
+#       foreground-background segmentation mask.
+#   davis16_{input}_{split}_instance
+#     - Like davis16_{input}_{split}, but annotations come from DAVIS 2017.
+#       Since DAVIS '17 contains all the sequences from DAVIS '16, we can take
+#       the instance annotations from DAVIS '16 and apply them directly to
+#       DAVIS '17.
+#
+# Path mapping:
+#   /davis16/annotations ->
+#       /data/achald/track/DAVIS/2016/json-annotations
+DATASETS.update({
     'davis16_flow_train': {
         IM_DIR: _DATA_DIR + '/davis16/liteflownet/',
         ANN_FN: _DATA_DIR + '/davis16/annotations/train-no-last-frame.json',
@@ -673,122 +598,39 @@ DATASETS.update({
         NUM_CLASSES: 2,
         IS_FLOW: True
     },
-    # The "moving" splits for DAVIS 16 contain all the videos from DAVIS 16,
-    # but the splits respect the splits made for DAVIS 17 moving videos above.
-    'davis16_flow_moving_train': {
-        IM_DIR: _DATA_DIR + '/davis16/liteflownet/',
-        ANN_FN: _DATA_DIR + '/davis16/moving-annotations/train-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: True
-    },
-    'davis16_flow_moving_test': {
-        IM_DIR: _DATA_DIR + '/davis16/liteflownet/',
-        ANN_FN: _DATA_DIR + '/davis16/moving-annotations/test-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: True
-    },
-    'davis16_rgb_moving_train': {
-        IM_DIR: _DATA_DIR + '/davis16/JPEGImages/',
-        ANN_FN: _DATA_DIR + '/davis16/moving-annotations/train-no-last-frame.json',
-        IMAGE_EXTENSION: '.jpg',
-        NUM_CLASSES: 2,
-        IS_FLOW: False
-    },
-    'davis16_rgb_moving_test': {
-        IM_DIR: _DATA_DIR + '/davis16/JPEGImages/',
-        ANN_FN: _DATA_DIR + '/davis16/moving-annotations/test-no-last-frame.json',
-        IMAGE_EXTENSION: '.jpg',
-        NUM_CLASSES: 2,
-        IS_FLOW: False
-    },
-    'davis_flow_vis_moving_train': {
-        IM_DIR: _DATA_DIR + '/davis/liteflownet-vis/',
-        ANN_FN: _DATA_DIR + '/davis/annotations/moving-train-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: False
-    },
-    'davis_flow_vis_moving_trainval': {
-        IM_DIR: _DATA_DIR + '/davis/liteflownet-vis/',
-        ANN_FN: _DATA_DIR + '/davis/annotations/moving-trainval-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: False
-    },
-    'davis_flow_vis_moving_test': {
-        IM_DIR: _DATA_DIR + '/davis/liteflownet-vis/',
-        ANN_FN: _DATA_DIR + '/davis/annotations/moving-test-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: False
-    },
-    'davis_flownet2_vis_moving_train': {
-        IM_DIR: _DATA_DIR + '/davis/flownet2-vis/',
-        ANN_FN: _DATA_DIR + '/davis/annotations/moving-train-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: False
-    },
-    'davis_flownet2_vis_moving_val': {
-        IM_DIR: _DATA_DIR + '/davis/flownet2-vis/',
-        ANN_FN: _DATA_DIR + '/davis/annotations/moving-val-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: False
-    },
-    'davis_flownet2_vis_moving_test': {
-        IM_DIR: _DATA_DIR + '/davis/flownet2-vis/',
-        ANN_FN: _DATA_DIR + '/davis/annotations/moving-test-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: False
-    },
-    'davis_hed_flow_moving_train': {
-        IM_DIR: _DATA_DIR + '/davis/hed-flow-concat/',
-        ANN_FN: _DATA_DIR + '/davis/annotations/moving-train-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: True
-    },
-    'davis_hed_flow_moving_trainval': {
-        IM_DIR: _DATA_DIR + '/davis/hed-flow-concat/',
-        ANN_FN: _DATA_DIR + '/davis/annotations/moving-trainval-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: True
-    },
-    'davis_hed_flow_moving_test': {
-        IM_DIR: _DATA_DIR + '/davis/hed-flow-concat/',
-        ANN_FN: _DATA_DIR + '/davis/annotations/moving-test-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: True
-    },
-    'davis_hed_flownet2_moving_train': {
-        IM_DIR: _DATA_DIR + '/davis/hed-flownet2-concat/',
-        ANN_FN: _DATA_DIR + '/davis/annotations/moving-train-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: True
-    },
-    'davis_hed_flownet2_moving_trainval': {
-        IM_DIR: _DATA_DIR + '/davis/hed-flownet2-concat/',
-        ANN_FN: _DATA_DIR + '/davis/annotations/moving-trainval-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: True
-    },
-    'davis_hed_flownet2_moving_test': {
-        IM_DIR: _DATA_DIR + '/davis/hed-flownet2-concat/',
-        ANN_FN: _DATA_DIR + '/davis/annotations/moving-test-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: True
-    },
-    'davis_rgb_moving_without_davis16_all': {
-        IM_DIR: _DATA_DIR + '/davis/JPEGImages/',
-        ANN_FN: _DATA_DIR + '/davis/annotations-without-davis16/moving-without-davis16-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: False,
-        IMAGE_EXTENSION: '.jpg'
-    },
-    'davis_flownet2_moving_without_davis16_all': {
-        IM_DIR: _DATA_DIR + '/davis/flownet2/',
-        ANN_FN: _DATA_DIR + '/davis/annotations-without-davis16/moving-without-davis16-no-last-frame.json',
-        NUM_CLASSES: 2,
-        IS_FLOW: True
-    },
 })
 
 # YTVOS
+#   ytvos_{input}_{split}
+#
+#   Split can be one of:
+#   - sub_train_8-21-18
+#       - Subset of YTVOS training set used for training.
+#         TODO: Remove the date from this dataset.
+#   - sub_val_8-21-18
+#       - Subset of YTVOS training set used for evaluation.
+#         TODO: Remove the date from this dataset.
+#   - all_moving_sub_{train/val}_8-21-18
+#       - Subset of sub_train/sub_val where all moving objects are labeled
+#         and all static objects are not labeled.
+#       - The date in this and all following datasets was the date when I
+#         created this subset; it was a quick way to version the dataset,
+#         since I had not filtered all of YTVOS yet.
+#   - all_moving_strict_sub_{train/val}_8-21-18
+#       - Subset of all_moving_sub_{train/val}_8-21-18, where we remove any
+#         sequences where a large part of the object never moves, or objects
+#         are over/undersegmented
+#   - all_moving_strict_interesting_sub_{train/val}_8-21-18
+#       - Subset of all_moving_strict_sub_{train/val}_8-21-18, created for
+#         diagnostic purposes. Contains "interesting" objects, by a subjective
+#         decision from me (@achald); these are usually objects that aren't in
+#         standard detection datasets, like MS COCO.
+#
+# Path mapping:
+#   /ytvos/train-splits/ ->
+#       /data/achald/track/ytvos/train-splits/
+#   /ytvos/all-moving-8-21-18/ ->
+#       /data/achald/track/ytvos/moving-only/labels-8-21-18/all-moving/
 DATASETS.update({
     'ytvos_rgb_sub_train_8-21-18': {
         IM_DIR: _DATA_DIR + '/ytvos/rgb/train',
