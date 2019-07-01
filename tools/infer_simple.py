@@ -442,9 +442,6 @@ def main():
             with open(out_data, 'wb') as f:
                 pickle.dump(data, f)
 
-        def raiser(e):
-            raise e
-
         if args.save_images and (out_image.exists() or vis_path is None):
             vis_progress.update()
         elif args.save_images and vis_path is not None:
