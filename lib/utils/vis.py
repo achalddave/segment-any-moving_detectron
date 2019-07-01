@@ -154,12 +154,13 @@ def vis_one_image(
             continue
 
         # show box (off by default, box_alpha=0.0)
-        ax.add_patch(
-            plt.Rectangle((bbox[0], bbox[1]),
-                          bbox[2] - bbox[0],
-                          bbox[3] - bbox[1],
-                          fill=False, edgecolor='g',
-                          linewidth=linewidth, alpha=box_alpha))
+        if box_alpha > 0:
+            ax.add_patch(
+                plt.Rectangle((bbox[0], bbox[1]),
+                            bbox[2] - bbox[0],
+                            bbox[3] - bbox[1],
+                            fill=False, edgecolor='g',
+                            linewidth=linewidth, alpha=box_alpha))
 
         if show_class:
             ax.text(
