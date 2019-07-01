@@ -82,6 +82,8 @@ def main():
             assert len(boxes[c]) == len(image_ids), (
                 f'Expected {len(image_ids)} boxes for class {c}, got '
                 f'{len(boxes[c])}')
+            if len(keypoints[c]) == 0:
+                keypoints[c] = [[] for _ in range(len(image_ids))]
         for i, image_id in enumerate(tqdm(image_ids)):
             output = {
                 'boxes': [boxes[c][i] for c in range(num_classes)],
