@@ -98,7 +98,7 @@ def subsample_by_parent_dir(paths, subsample_factor):
 
 
 def visualize(image_or_path, pickle_data_or_path, output_path, dataset,
-              thresh):
+              thresh, show_box=False, show_class=False):
     if output_path.exists():
         return
 
@@ -122,8 +122,8 @@ def visualize(image_or_path, pickle_data_or_path, output_path, dataset,
         data['segmentations'],
         data['keypoints'],
         dataset=dataset,
-        box_alpha=0.0,
-        show_class=False,
+        box_alpha=1.0 if show_box else 0.0,
+        show_class=show_class,
         thresh=thresh,
         kp_thresh=2,
         dpi=300,
@@ -131,7 +131,7 @@ def visualize(image_or_path, pickle_data_or_path, output_path, dataset,
 
 
 def visualize_unpack(args):
-    return visualize(*args)
+    return visualize(**args)
 
 
 def main():
@@ -162,6 +162,8 @@ def main():
               'only visualize on every k\'th frame. If --recursive is '
               'specified, follow this procedure for every directory '
               'containing a .pickle file separately.'))
+    parser.add_argument('--show-box', action='store_true')
+    parser.add_argument('--show-class', action='store_true')
 
     args = parser.parse_args()
 
@@ -214,8 +216,15 @@ def main():
         if output_path.exists():
             continue
         output_path.parent.mkdir(exist_ok=True, parents=True)
-        tasks.append((image_path, pickle_path, output_path, dataset,
-                      args.threshold))
+        tasks.append({
+            'image_or_path': image_path,
+            'pickle_data_or_path': pickle_path,
+            'output_path': output_path,
+            'dataset': dataset,
+            'thresh': args.threshold,
+            'show_box': args.show_box,
+            'show_class': args.show_class
+        })
 
     if not tasks:
         logging.info('Nothing to do! Exiting.')

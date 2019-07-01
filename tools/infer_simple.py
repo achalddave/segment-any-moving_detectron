@@ -139,6 +139,8 @@ def parse_args():
               'visualize on every k\'th frame. If --recursive is specified, '
               'follow this procedure for every directory containing a .pickle '
               'file separately.'))
+    parser.add_argument('--show_box', action='store_true')
+    parser.add_argument('--show_class', action='store_true')
 
     parser.add_argument(
         '--input_types',
@@ -454,6 +456,8 @@ def main():
                     pickle_data_or_path=data,
                     output_path=out_image,
                     dataset=dataset,
+                    show_box=args.show_box,
+                    show_class=args.show_class,
                     thresh=args.vis_threshold),
                 callback=visualization_callback,
                 error_callback=visualization_error)
