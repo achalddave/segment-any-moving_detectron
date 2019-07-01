@@ -401,7 +401,7 @@ def main():
 
         def visualization_error(error):
             logging.error('Error when visualizing:')
-            logging.error(error)
+            logging.error(error.__cause__)
 
     for image_paths, vis_path, out_image, out_data in zip(
             tqdm(images, desc='Infer', position=0), vis_images,
