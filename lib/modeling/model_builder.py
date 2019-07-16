@@ -95,11 +95,19 @@ class Generalized_RCNN(nn.Module):
         if not isinstance(Conv_Body_dim_outs, list):
             Conv_Body_dim_outs = [Conv_Body_dim_outs]
 
+        self.merge_appearance = cfg.MODEL.MERGE_WITH_APPEARANCE.ENABLED
+        if self.merge_appearance:
+            appearance_input = cfg.MODEL.MERGE_WITH_APPEARANCE.INPUT_INDEX
+
         # Region Proposal Network
         if cfg.RPN.RPN_ON:
             self.RPN = rpn_heads.generic_rpn_outputs(
                 Conv_Body_dim_outs[cfg.RPN.INPUT_INDEX],
                 self.Conv_Body.spatial_scale)
+            if self.merge_appearance:
+                self.Appearance_RPN = rpn_heads.generic_rpn_outputs(
+                    Conv_Body_dim_outs[appearance_input],
+                    self.Conv_Body.spatial_scale)
 
         if cfg.FPN.FPN_ON:
             # Only supports case when RPN and ROI min levels are the same
@@ -122,6 +130,14 @@ class Generalized_RCNN(nn.Module):
                 self.roi_feature_transform, self.Conv_Body.spatial_scale)
             self.Box_Outs = fast_rcnn_heads.fast_rcnn_outputs(
                 self.Box_Head.dim_out)
+            if self.merge_appearance:
+                self.Appearance_Box_Head = get_func(
+                    cfg.FAST_RCNN.ROI_BOX_HEAD)(
+                        Conv_Body_dim_outs[appearance_input],
+                        self.roi_feature_transform,
+                        self.Conv_Body.spatial_scale)
+                self.Appearance_Box_Outs = fast_rcnn_heads.fast_rcnn_outputs(
+                    self.Box_Head.dim_out)
 
         # Mask Branch
         if cfg.MODEL.MASK_ON:
@@ -136,6 +152,17 @@ class Generalized_RCNN(nn.Module):
                 self.Mask_Head.share_res5_module(self.Box_Head.res5)
             self.Mask_Outs = mask_rcnn_heads.mask_rcnn_outputs(self.Mask_Head.dim_out)
 
+            if self.merge_appearance:
+                self.Appearance_Mask_Head = get_func(cfg.MRCNN.ROI_MASK_HEAD)(
+                    Conv_Body_dim_outs[appearance_input],
+                    self.roi_feature_transform, self.Conv_Body.spatial_scale)
+                if getattr(self.Appearance_Mask_Head, 'SHARE_RES5', False):
+                    self.Appearance_Mask_Head.share_res5_module(
+                        self.Appearance_Box_Head.res5)
+                self.Appearance_Mask_Outs = mask_rcnn_heads.mask_rcnn_outputs(
+                    self.Appearance_Mask_Head.dim_out)
+
+
         # Keypoints Branch
         if cfg.MODEL.KEYPOINTS_ON:
             self.Keypoint_Head = get_func(cfg.KRCNN.ROI_KEYPOINTS_HEAD)(
@@ -148,6 +175,7 @@ class Generalized_RCNN(nn.Module):
                     (cfg.FAST_RCNN.INPUT_INDEX, cfg.KRCNN.INPUT_INDEX))
                 self.Keypoint_Head.share_res5_module(self.Box_Head.res5)
             self.Keypoint_Outs = keypoint_rcnn_heads.keypoint_outputs(self.Keypoint_Head.dim_out)
+            assert not self.merge_appearance
 
         self._init_modules()
 
@@ -193,6 +221,17 @@ class Generalized_RCNN(nn.Module):
         blob_conv = self.Conv_Body(im_data)
         if not isinstance(self.Conv_Body, body_muxer.BodyMuxer):
             blob_conv = [blob_conv]
+        if self.merge_appearance:
+            # TODO: Is this necessary?
+            blob_conv_appearance = [
+                x.clone()
+                for x in blob_conv[cfg.MODEL.MERGE_WITH_APPEARANCE.INPUT_INDEX]
+            ]
+            im_info_appearance = im_info.clone()
+            if roidb is not None:
+                roidb_appearance = roidb.copy()
+            else:
+                roidb_appearance = None
 
         rpn_ret = self.RPN(blob_conv[cfg.RPN.INPUT_INDEX], im_info, roidb)
 
@@ -221,6 +260,7 @@ class Generalized_RCNN(nn.Module):
             pass
 
         if self.training:
+            assert not self.merge_appearance
             return_dict['losses'] = {}
             return_dict['metrics'] = {}
             # rpn loss
@@ -290,6 +330,32 @@ class Generalized_RCNN(nn.Module):
             return_dict['rois'] = rpn_ret['rois']
             return_dict['cls_score'] = cls_score
             return_dict['bbox_pred'] = bbox_pred
+
+        if self.merge_appearance:
+            rpn_ret = self.Appearance_RPN(blob_conv_appearance, im_info_appearance,
+                               roidb_appearance)
+
+            # if self.training:
+            #     # can be used to infer fg/bg ratio
+            #     return_dict['rois_label'] = rpn_ret['labels_int32']
+
+            if cfg.FPN.FPN_ON:
+                # Retain only the blobs that will be used for RoI heads. `blob_conv` may include
+                # extra blobs that are used for RPN proposals, but not for RoI heads.
+                blob_conv_appearance = blob_conv_appearance[-self.
+                                                            num_roi_levels:]
+
+            assert not cfg.MODEL.RPN_ONLY
+            box_feat = self.Appearance_Box_Head(blob_conv_appearance, rpn_ret)
+            cls_score, bbox_pred = self.Appearance_Box_Outs(box_feat)
+
+            return_dict['appearance'] = {
+                'cls_score': cls_score,
+                'bbox_pred': bbox_pred,
+                'rois': rpn_ret['rois']
+            }
+
+
 
         return return_dict
 

@@ -103,6 +103,10 @@ def parse_args():
 
     parser.add_argument('--load_ckpt', help='path of checkpoint to load')
     parser.add_argument(
+        '--load_appearance_ckpt',
+        help=('path of checkpoint to load for appearance stream. only used if '
+              'cfg.MODEL.MERGE_WITH_APPEARANCE.ENABLED is True.'))
+    parser.add_argument(
         '--load_detectron', help='path to the detectron weight pickle file')
 
     parser.add_argument(
@@ -141,6 +145,7 @@ def parse_args():
               'file separately.'))
     parser.add_argument('--show_box', action='store_true')
     parser.add_argument('--show_class', action='store_true')
+    parser.add_argument('--num-threads', type=int, default=4)
 
     parser.add_argument(
         '--input_types',
@@ -200,6 +205,10 @@ def main():
     assert bool(args.image_dirs) ^ bool(args.images)
 
     num_inputs = len(args.image_dirs) if args.image_dirs is not None else 1
+
+    torch.set_num_threads(args.num_threads)
+    os.environ['OMP_NUM_THREADS'] = str(args.num_threads)
+    os.environ['MKL_NUM_THREADS'] = str(args.num_threads)
 
     if args.input_types is None:
         logging.info('Input type not specified, assuming RGB for all.')
@@ -264,10 +273,28 @@ def main():
     if args.cuda:
         maskRCNN.cuda()
 
+    merge_appearance = cfg.MODEL.MERGE_WITH_APPEARANCE.ENABLED
+    if merge_appearance:
+        assert args.load_ckpt is not None
+
     if args.load_ckpt:
         load_name = args.load_ckpt
         logging.info("loading checkpoint %s" % (load_name))
         checkpoint = torch.load(load_name, map_location=lambda storage, loc: storage)
+        if merge_appearance:
+            assert args.load_appearance_ckpt is not None
+            appearance_model = torch.load(
+                args.load_appearance_ckpt,
+                map_location=lambda storage, loc: storage)['model']
+            appearance_modules = {}
+            for k, v in appearance_model.items():
+                if k.startswith('Conv_Body.'):
+                    continue
+                else:
+                    appearance_modules[f'Appearance_{k}'] = v
+            assert set(appearance_modules.keys()).isdisjoint(
+                set(checkpoint['model'].keys()))
+            checkpoint['model'].update(appearance_modules)
         net_utils.load_ckpt(maskRCNN, checkpoint['model'])
 
     if args.load_detectron:
@@ -332,6 +359,15 @@ def main():
                 f'Found {len(relative_paths_union)} unique images, '
                 f'but only {len(relative_paths)} are in all --image_dirs. '
                 f'({num_missing} missing)')
+
+        if merge_appearance:
+            for relative_path in relative_paths_union - relative_paths:
+                # Map flow image to None
+                all_images[1][relative_path] = None
+            logging.info(
+                f'Using all paths, despite missing images to support '
+                f'using last RGB frame for cfg.MODEL.MERGE_WITH_APPEARANCE.')
+            relative_paths = relative_paths_union
 
         relative_paths = natsorted(relative_paths, alg=ns.PATH)
         # Map relative path to list of images ordered as with image_dir
@@ -414,28 +450,54 @@ def main():
                 vis_progress.update()
             continue
 
+        # If merge_appearance is enabled, this is True for the last frame where
+        # only the appearance stream should be used.
+        appearance_only = False
         image_list = []
         for is_flow, image_path in zip(input_is_flow, image_paths):
             if is_flow:
-                im = load_flow_png(
-                    str(image_path),
-                    cfg.DATA_LOADER.FLOW.LOW_MAGNITUDE_THRESHOLD)
+                if merge_appearance and image_path is None:
+                    # Last frame does not have flow, just pass dummy flow to
+                    # allow running RGB stream.
+                    appearance_only = True
+                    im = cv2.imread(str(image_paths[0]))
+                else:
+                    im = load_flow_png(
+                        str(image_path),
+                        cfg.DATA_LOADER.FLOW.LOW_MAGNITUDE_THRESHOLD)
             else:
                 im = cv2.imread(str(image_path))
             assert im is not None
             image_list.append(im)
+
         timers = defaultdict(Timer)
 
-        cls_boxes, cls_segms, cls_keyps = im_detect_all(
+        outputs = im_detect_all(
             maskRCNN, pack_sequence(image_list), timers=timers)
+        if not cfg.MODEL.MERGE_WITH_APPEARANCE.ENABLED:
+            cls_boxes, cls_segms, cls_keyps = outputs
+        else:
+            outputs, appearance_outputs = outputs
+            cls_boxes, cls_segms, cls_keyps = outputs
 
         file_logger.info('Processing {} -> {}'.format(
             image_path, out_image if args.save_images else out_data))
+        if appearance_only:
+            cls_boxes = [np.empty((0, 5)) for _ in cls_boxes]
+            cls_segms = [[] for _ in cls_segms]
+            cls_keyps = None
+
         data = {
             'boxes': cls_boxes,
             'segmentations': cls_segms,
             'keypoints': cls_keyps,
         }
+        if cfg.MODEL.MERGE_WITH_APPEARANCE.ENABLED:
+            data['appearance_stream'] = {
+                'boxes': appearance_outputs[0],
+                'segmentations': appearance_outputs[1],
+                'keypoints': appearance_outputs[2]
+            }
 
         if not os.path.isfile(out_data):
             out_data.parent.mkdir(exist_ok=True, parents=True)

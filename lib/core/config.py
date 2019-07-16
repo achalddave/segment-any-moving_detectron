@@ -441,6 +441,15 @@ __C.MODEL.CONV_BODY = ''
 # Conv body to use for each of the inputs.
 __C.MODEL.CONV_MUXER_BODIES = ()
 
+# Hack: If specified, merge the outputs of a joint appearance+flow model with
+# the appearance only model specified here. NOTE: This is fairly hackily
+# implemented; it is only tested for the final model reported in the "Towards
+# Segmenting Anything That Moves" paper (e.g., only with
+# BodyMuxer_ConcatenateAdapt).
+__C.MODEL.MERGE_WITH_APPEARANCE = AttrDict()
+__C.MODEL.MERGE_WITH_APPEARANCE.ENABLED = False
+__C.MODEL.MERGE_WITH_APPEARANCE.INPUT_INDEX = 0  # Usually corresponds to RGB
+
 # Adaptation function to use for BodyMuxer_ConcatenateAdapt
 __C.MODEL.CONV_MUXER_CONCATENATE_ADAPT_FN = ''
 

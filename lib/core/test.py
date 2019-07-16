@@ -30,6 +30,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import functools
+import logging
 from collections import defaultdict
 import cv2
 import numpy as np
@@ -47,28 +49,10 @@ import utils.image as image_utils
 import utils.keypoints as keypoint_utils
 
 
-def im_detect_all(model, im, box_proposals=None, timers=None):
-    """Process the outputs of model for testing
-
-    Args:
-        model: the network module
-        im (np.ndarray): Shape (height, width, num_channels). If working with
-          multiple inputs, num_channels = 3 * NUM_INPUTS.
-        box_proposals
-        timer: record the cost of time for different steps
-    """
+def im_detect_all_after_box(model, im, im_scale, blob_conv, scores, boxes,
+                            timers=None):
     if timers is None:
         timers = defaultdict(Timer)
-
-    timers['im_detect_bbox'].tic()
-    if cfg.TEST.BBOX_AUG.ENABLED:
-        scores, boxes, im_scale, blob_conv = im_detect_bbox_aug(
-            model, im, box_proposals)
-    else:
-        scores, boxes, im_scale, blob_conv = im_detect_bbox(
-            model, im, cfg.TEST.SCALE, cfg.TEST.MAX_SIZE, box_proposals)
-    timers['im_detect_bbox'].toc()
-
     # score and boxes are from the whole image after score thresholding and nms
     # (they are not separated by class) (numpy.ndarray)
     # cls_boxes boxes and scores are separated by class and in the format used
@@ -108,6 +92,48 @@ def im_detect_all(model, im, box_proposals=None, timers=None):
     return cls_boxes, cls_segms, cls_keyps
 
 
+def im_detect_all(model, im, box_proposals=None, timers=None):
+    """Process the outputs of model for testing
+
+    Args:
+        model: the network module
+        im (np.ndarray): Shape (height, width, num_channels). If working with
+          multiple inputs, num_channels = 3 * NUM_INPUTS.
+        box_proposals
+        timer: record the cost of time for different steps
+    """
+    if timers is None:
+        timers = defaultdict(Timer)
+
+    timers['im_detect_bbox'].tic()
+    if cfg.TEST.BBOX_AUG.ENABLED:
+        scores, boxes, im_scale, blob_conv = im_detect_bbox_aug(
+            model, im, box_proposals)
+    else:
+        scores, boxes, im_scale, blob_conv = im_detect_bbox(
+            model, im, cfg.TEST.SCALE, cfg.TEST.MAX_SIZE, box_proposals)
+    timers['im_detect_bbox'].toc()
+
+    # logging.info('blob_conv means:\n%s', [x.mean() for x in blob_conv[0]])
+    im_detect_rest = functools.partial(im_detect_all_after_box,
+                                       model=model,
+                                       im=im,
+                                       im_scale=im_scale,
+                                       blob_conv=blob_conv,
+                                       timers=timers)
+    if cfg.MODEL.MERGE_WITH_APPEARANCE.ENABLED:
+        scores, appearance_scores = scores
+        boxes, appearance_boxes = boxes
+        # logging.info('Appearance boxes:\n%s', appearance_boxes)
+        return [
+            im_detect_rest(scores=scores, boxes=boxes),
+            im_detect_rest(scores=appearance_scores, boxes=appearance_boxes)
+        ]
+    else:
+        # logging.info('Boxes:\n%s', boxes)
+        return im_detect_rest(scores=scores, boxes=boxes)
+
+
 def im_conv_body_only(model, im, target_scale, target_max_size):
     inputs, im_scale = _get_blobs(im, None, target_scale, target_max_size)
 
@@ -122,33 +148,7 @@ def im_conv_body_only(model, im, target_scale, target_max_size):
     return blob_conv, im_scale
 
 
-def im_detect_bbox(model, im, target_scale, target_max_size, boxes=None):
-    """Prepare the bbox for testing"""
-
-    inputs, im_scale = _get_blobs(im, boxes, target_scale, target_max_size)
-
-    if cfg.DEDUP_BOXES > 0 and not cfg.MODEL.FASTER_RCNN:
-        v = np.array([1, 1e3, 1e6, 1e9, 1e12])
-        hashes = np.round(inputs['rois'] * cfg.DEDUP_BOXES).dot(v)
-        _, index, inv_index = np.unique(
-            hashes, return_index=True, return_inverse=True
-        )
-        inputs['rois'] = inputs['rois'][index, :]
-        boxes = boxes[index, :]
-
-    # Add multi-level rois for FPN
-    if cfg.FPN.MULTILEVEL_ROIS and not cfg.MODEL.FASTER_RCNN:
-        _add_multilevel_rois_for_test(inputs, 'rois')
-
-    if cfg.PYTORCH_VERSION_LESS_THAN_040:
-        inputs['data'] = [Variable(torch.from_numpy(inputs['data']), volatile=True)]
-        inputs['im_info'] = [Variable(torch.from_numpy(inputs['im_info']), volatile=True)]
-    else:
-        inputs['data'] = [torch.from_numpy(inputs['data'])]
-        inputs['im_info'] = [torch.from_numpy(inputs['im_info'])]
-
-    return_dict = model(**inputs)
-
+def process_return_dict(return_dict, im, im_scale):
     if cfg.MODEL.FASTER_RCNN:
         rois = return_dict['rois'].data.cpu().numpy()
         # unscale back to raw image space
@@ -179,13 +179,50 @@ def im_detect_bbox(model, im, target_scale, target_max_size, boxes=None):
         # Simply repeat the boxes, once for each class
         pred_boxes = np.tile(boxes, (1, scores.shape[1]))
 
+    return scores, pred_boxes
+
+
+def im_detect_bbox(model, im, target_scale, target_max_size, boxes=None):
+    """Prepare the bbox for testing"""
+
+    inputs, im_scale = _get_blobs(im, boxes, target_scale, target_max_size)
+
+    if cfg.DEDUP_BOXES > 0 and not cfg.MODEL.FASTER_RCNN:
+        v = np.array([1, 1e3, 1e6, 1e9, 1e12])
+        hashes = np.round(inputs['rois'] * cfg.DEDUP_BOXES).dot(v)
+        _, index, inv_index = np.unique(
+            hashes, return_index=True, return_inverse=True
+        )
+        inputs['rois'] = inputs['rois'][index, :]
+        boxes = boxes[index, :]
+
+    # Add multi-level rois for FPN
+    if cfg.FPN.MULTILEVEL_ROIS and not cfg.MODEL.FASTER_RCNN:
+        _add_multilevel_rois_for_test(inputs, 'rois')
+
+    if cfg.PYTORCH_VERSION_LESS_THAN_040:
+        inputs['data'] = [Variable(torch.from_numpy(inputs['data']), volatile=True)]
+        inputs['im_info'] = [Variable(torch.from_numpy(inputs['im_info']), volatile=True)]
+    else:
+        inputs['data'] = [torch.from_numpy(inputs['data'])]
+        inputs['im_info'] = [torch.from_numpy(inputs['im_info'])]
+
+    return_dict = model(**inputs)
+    scores, pred_boxes = process_return_dict(return_dict, im, im_scale)
+
     if cfg.DEDUP_BOXES > 0 and not cfg.MODEL.FASTER_RCNN:
         # Map scores and predictions back to the original set of boxes
         scores = scores[inv_index, :]
         pred_boxes = pred_boxes[inv_index, :]
+        assert not cfg.MODEL.MERGE_WITH_APPEARANCE.ENABLED
+
+    if cfg.MODEL.MERGE_WITH_APPEARANCE.ENABLED:
+        appearance_scores, appearance_boxes = process_return_dict(
+            return_dict['appearance'], im, im_scale)
+        scores = (scores, appearance_scores)
+        pred_boxes = (pred_boxes, appearance_boxes)
 
     return scores, pred_boxes, im_scale, return_dict['blob_conv']
-
 
 def im_detect_bbox_aug(model, im, box_proposals=None):
     """Performs bbox detection with test-time augmentations.
