@@ -487,8 +487,8 @@ def main():
         file_logger.info('Processing {} -> {}'.format(
             image_path, out_image if args.save_images else out_data))
         if appearance_only:
-            cls_boxes = [np.empty((0, 5)) for _ in cls_boxes]
-            cls_segms = [[] for _ in cls_segms]
+            cls_boxes = [np.empty((0, 5)) for _ in appearance_outputs[0]]
+            cls_segms = None  # [[] for _ in appearance_outputs[1]]
             cls_keyps = None
 
         data = {
