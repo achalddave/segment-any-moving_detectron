@@ -158,6 +158,7 @@ def parse_args():
         '--num_classes',
         type=int,
         help='If specified, update num classes to this.')
+    parser.add_argument('--quiet', action='store_true')
 
     args = parser.parse_args()
 
@@ -188,7 +189,11 @@ def main():
     logging_path = str(output_dir / (
         'detectron-pytorch-%s.log' % launch_time_str))
     output_dir.mkdir(parents=True, exist_ok=True)
+
     setup_logging(logging_path)
+
+    if args.quiet:
+        logging.root.setLevel(logging.WARN)
 
     file_logger = logging.getLogger(logging_path)
     subprocess.call([
@@ -197,7 +202,6 @@ def main():
     ])
 
     log_argv(file_logger)
-
     logging.info('Called with args:')
     logging.info(pformat(vars(args)))
 
